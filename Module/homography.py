@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import common
+import math
 
 def makeBaseArray(origin, spacing):
     cols, rows = 10, 6  # 10 columns (x), 6 rows (y)
@@ -37,12 +38,13 @@ def homography(path, blade_profile, debug=False):
 
     ret, corners = cv2.findChessboardCornersSB(grayImg, (10,6))
     if debug: viewCorners(img, corners)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    corners = cv2.cornerSubPix(grayImg, corners, (11,11), (-1,-1), criteria)
     
-    pixel_origin = [3060, 2260]
+    pixel_origin = [3000, 2200]
     pixel_spacing = [60,60] # pixel
-    [3060, 2260]
     real_spacing = [3,3]    # mm
-    scale = [real_spacing[0]/real_spacing[0],real_spacing[1]/real_spacing[1]]
+    scale = [real_spacing[0]/pixel_spacing[0],real_spacing[1]/pixel_spacing[1]]
 
     cornersBase = makeBaseArray(pixel_origin, pixel_spacing)
 
@@ -61,5 +63,7 @@ def homography(path, blade_profile, debug=False):
         common.dispContour(warped_img,warped_profile,"warped profile")
 
     relative_profile = ((warped_profile - pixel_origin) * scale).astype(np.int32)
+
+    print(math.hypot(blade_profile[-1,0,0]-blade_profile[0,0,0], blade_profile[-1,0,1]-blade_profile[0,0,1]))
 
     return relative_profile

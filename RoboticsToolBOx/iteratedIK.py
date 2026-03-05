@@ -84,9 +84,10 @@ def ik(robot, rArr, nArr,
     q0 = [0,0,pi/2,pi/2,0]
     result = []
 
-    for i in range(len(rArr)):
-        if i % 100 == 0:
-            print(i)
+    for i in range(300,len(rArr)):
+        print(i)
+        print(rArr[i])
+        print(nArr[i])
         q = ikPt(robot, rArr[i], nArr[i], q0, max_iter, tol, lam, mu)
         q0 = q
         result.append(q)
