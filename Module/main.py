@@ -6,14 +6,14 @@ import cv2
 import numpy as np
 
 # Constants
-path = "../orangeCalib/calibration2/image1.jpg"
+path = "../rpiImages/bigPaper.jpg"
 global_offset = np.array([2611.5,415.03,131.5], dtype=float)   # This is measured from a homed position
 bevel_angle = 15                                        # in degrees one-sided
 
 # Functions
 # Wait for USB prompt
 # Need to make somthing to take image and assign path
-blade_profile = profileExtraction(path, debug=True)            # pixels uncorrected
+blade_profile = profileExtraction(path, debug=False)            # pixels uncorrected
 relative_profile = homography(path, blade_profile, debug=True)  # in mm relative to corner of checkers
 # TODO: change so normals is one array and z switched later to save space
 profile, normals1, normals2 = knifeGeo(relative_profile, bevel_angle)

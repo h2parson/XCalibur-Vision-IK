@@ -3,12 +3,12 @@ import numpy as np
 import common
 import math
 
-def makeBaseArray(origin, spacing):
-    cols, rows = 10, 6  # 10 columns (x), 6 rows (y)
+def makeBaseArray(origin, spacing, checkerDimensions):
+    cols, rows = checkerDimensions
 
     # Create grid of points
-    xs = np.arange(cols) * spacing[0] + origin[0]  # 10 x-values
-    ys = np.arange(rows) * spacing[1] + origin[1]  # 6 y-values
+    xs = np.arange(cols) * spacing[0] + origin[0]
+    ys = np.arange(rows) * spacing[1] + origin[1]
 
     # Create meshgrid
     grid_x, grid_y = np.meshgrid(xs, ys)  # shape (rows, cols)
@@ -34,36 +34,42 @@ def homography(path, blade_profile, debug=False):
     img = cv2.imread(path)
     h, w = img.shape[:2]
 
-    grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray= cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # gray = cv2.equalizeHist(gray)
+    # gray = cv2.GaussianBlur(gray, (5,5), 0)
 
-    ret, corners = cv2.findChessboardCornersSB(grayImg, (10,6))
-    if debug: viewCorners(img, corners)
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    corners = cv2.cornerSubPix(grayImg, corners, (11,11), (-1,-1), criteria)
-    
-    pixel_origin = [3000, 2200]
-    pixel_spacing = [60,60] # pixel
-    real_spacing = [3,3]    # mm
-    scale = [real_spacing[0]/pixel_spacing[0],real_spacing[1]/pixel_spacing[1]]
+    checker_dimensions = (22,4)
 
-    cornersBase = makeBaseArray(pixel_origin, pixel_spacing)
-
+    ret, corners = cv2.findChessboardCorners(gray, checker_dimensions)
     if not ret:
         print(f"No chessboard found in {path}")
         return
+ 
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+    if debug: viewCorners(img, corners)
+    
+    pixel_origin = [200, 2000]
+    pixel_spacing = [190,190] # pixel
+    real_spacing = [9.36363636364, 9.36363636364]    # mm
+    scale = [real_spacing[0]/pixel_spacing[0],real_spacing[1]/pixel_spacing[1]]
+
+    cornersBase = makeBaseArray(pixel_origin, pixel_spacing, checker_dimensions)
 
     # Compute homography
-    H, mask = cv2.findHomography(corners, cornersBase, cv2.RANSAC)
+    H, _ = cv2.findHomography(corners, cornersBase, cv2.RANSAC)
 
     warped_profile = cv2.perspectiveTransform(blade_profile.astype(np.float32), H)
     warped_profile = warped_profile.astype(np.int32)  # <-- fix for polylines
 
     if debug: 
-        warped_img = cv2.warpPerspective(img, H, (w, h))
+        warped_img = cv2.warpPerspective(img, H, (int(1.1*w), int(1.1*h)))
         common.dispContour(warped_img,warped_profile,"warped profile")
 
     relative_profile = ((warped_profile - pixel_origin) * scale).astype(np.int32)
 
-    print(math.hypot(blade_profile[-1,0,0]-blade_profile[0,0,0], blade_profile[-1,0,1]-blade_profile[0,0,1]))
+    print(relative_profile[-1,0,0]-relative_profile[0,0,0])
 
     return relative_profile
+
+

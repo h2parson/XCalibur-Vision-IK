@@ -15,8 +15,8 @@ def getBladeContour(img, debug=False):
     # get dimensions
     h, w = img.shape[:2]
 
-    grey_lwr_thr = np.array([0, 0, 170])
-    grey_upr_thr = np.array([140, 140, 255])
+    grey_lwr_thr = np.array([0, 0, 200])
+    grey_upr_thr = np.array([20, 20, 255])
     mask = cv2.inRange(img, grey_lwr_thr, grey_upr_thr)
     mask = cv2.bitwise_not(mask)
     
