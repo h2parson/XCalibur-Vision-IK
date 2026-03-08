@@ -1,6 +1,7 @@
 import cv2
 import pyautogui
 import os
+import numpy as np
 
 def dispImage(image, text):
     screen_width, screen_height = pyautogui.size()
@@ -25,3 +26,10 @@ def getFilenames(root_dir):
             relative_paths.append(filename)
 
     return relative_paths
+
+def flipZ(normals):
+    result = []
+    for i in range(len(normals)):
+        n = np.array([normals[i][0],normals[i][1],-normals[i][2]])
+        result.append(n)
+    return result

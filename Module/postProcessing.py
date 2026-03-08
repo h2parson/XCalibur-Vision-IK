@@ -18,6 +18,14 @@ def profileSmoothing(blade_profile, sigma):
     
     return blade_smooth
 
+def sparseArray(arr, n):
+    if len(arr) == 0:
+        return arr
+    indices = np.arange(0, len(arr), n)
+    if indices[-1] != len(arr) - 1:
+        indices = np.append(indices, len(arr) - 1)
+    return arr[indices]
+
 def tangent(blade_profile, sigma=101):
     x = blade_profile[:,0,0].astype(float)  # <--- convert to float
     y = blade_profile[:,0,1].astype(float)
@@ -63,15 +71,8 @@ def normal(b_list,v_list):
         v = v_list[i]
 
         c = np.cross(b, v)
-        c = c/np.linalg.norm(v)
+        c = c/np.linalg.norm(c)
         result.append(c)
-    return result
-
-def flipZ(normals):
-    result = []
-    for i in range(len(normals)):
-        n = np.array([normals[i][0],normals[i][1],-normals[i][2]])
-        result.append(n)
     return result
 
 def to3D(smooth):
@@ -81,15 +82,30 @@ def to3D(smooth):
     result = np.hstack([smooth_2d, np.zeros((smooth_2d.shape[0], 1))])
     return result
 
+def swapXY(arr):
+    for i in range(len(arr)):
+        x = np.array([arr[i][1], -arr[i][0], arr[i][2]])
+        arr[i] = x
+    return arr
+
 def knifeGeo(blade_profile, theta):
     sigmaPos = 51
     sigmaTan = 101
+    sampleRatio = 10
 
     smooth = profileSmoothing(blade_profile,sigmaPos)
+    sparseSmooth = sparseArray(smooth, sampleRatio)
     tangents = tangent(smooth, sigmaTan)
     bevels = bevelVectors(tangents, theta)
     smooth3D = to3D(smooth)
     normals1 = normal(bevels,tangents)
-    normals2 = flipZ(normals1)
+    sparseTangents = sparseArray(tangents, sampleRatio)
+    bevels = bevelVectors(sparseTangents, theta)
+    smooth3D = to3D(sparseSmooth)
+    normals1 = normal(bevels,sparseTangents)
+
+    # need to change to global coords
+    smooth3D = swapXY(smooth3D)
+    normals1 = swapXY(normals1)
     
-    return smooth3D, normals1, normals2
+    return smooth3D, normals1
