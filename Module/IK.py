@@ -1,8 +1,5 @@
 import roboticstoolbox as rtb
 import numpy as np
-from spatialgeometry import Cylinder, Box, Sphere
-from spatialmath import SE3
-from scipy.spatial.transform import Rotation as R
 from math import pi, degrees
 
 def robot():
@@ -85,8 +82,6 @@ def ik(robot, rArr, nArr,
     result = []
 
     for i in range(len(rArr)):
-        if i % 100 == 0:
-            print(i)
         q = ikPt(robot, rArr[i], nArr[i], q0, max_iter, tol, lam, mu)
         if q is None:
             print(i)
@@ -97,31 +92,8 @@ def ik(robot, rArr, nArr,
 
     return result
 
-data = np.load("knife_data.npz")
-
-profile = data["profile"]
-normals1 = data["normals1"]
-normals2 = data["normals2"]
-
-# n = normals1[0]
-# r = [109.5,-145.97,131.5]
-
-robot = robot()
-
-# q0 = [0,0,pi/2,pi/2,0]
-# q = ikPt(robot, r,n,q0)
-# print(q)
-
-qArr = ik(robot, profile, normals1)
-
 def degQ(q):
     r = q.copy()
     for i in range(1,4):
         r[i] = degrees(r[i])
     return r
-
-for i in range(4):
-    robot.plot(qArr[i*len(qArr)//4])
-    input("Press Enter to close...")
-robot.plot(qArr[-1])
-input("Press Enter to close...")
