@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Load image
-image_path = "../rpiImages/topLight.jpg"
+image_path = "../rpiImages/bigPaper.jpg"
 img = cv2.imread(image_path)
 import pyautogui
 
@@ -27,11 +27,11 @@ def show_hsv(event, x, y, flags, param):
         hsv_value = hsv_img[y, x]
         output = img.copy()
         # Draw a small circle at the cursor
-        cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
+        cv2.circle(output, (x, y), 5, (0, 255, 0), -1)
         # Put text: coordinates + HSV
         text = f"X:{x} Y:{y} H:{hsv_value[0]} S:{hsv_value[1]} V:{hsv_value[2]}"
         cv2.putText(output, text, (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         cv2.imshow("HSV Inspector", output)
 
 # Create window and set mouse callback

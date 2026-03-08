@@ -18,6 +18,20 @@ def profileSmoothing(blade_profile, sigma):
     
     return blade_smooth
 
+def sparseArray(arr, n):
+    if len(arr) == 0:
+        return arr
+    indices = np.arange(0, len(arr), n)
+    if indices[-1] != len(arr) - 1:
+        indices = np.append(indices, len(arr) - 1)
+    return arr[indices]
+
+def swapXY(arr):
+    for i in range(len(arr)):
+        x = np.array([arr[i,0,1],arr[i,0,0]])
+        arr[i] = x
+    return arr
+
 def tangent(blade_profile, sigma=101):
     x = blade_profile[:,0,0].astype(float)  # <--- convert to float
     y = blade_profile[:,0,1].astype(float)
@@ -63,7 +77,7 @@ def normal(b_list,v_list):
         v = v_list[i]
 
         c = np.cross(b, v)
-        c = c/np.linalg.norm(v)
+        c = c/np.linalg.norm(c)
         result.append(c)
     return result
 
@@ -84,12 +98,53 @@ def to3D(smooth):
 def knifeGeo(blade_profile, theta):
     sigmaPos = 51
     sigmaTan = 101
+    sampleRatio = 10
 
     smooth = profileSmoothing(blade_profile,sigmaPos)
+    smooth = swapXY(smooth)
+    sparseSmooth = sparseArray(smooth, sampleRatio)
+    sparseSmooth = swapXY(sparseSmooth)
     tangents = tangent(smooth, sigmaTan)
-    bevels = bevelVectors(tangents, theta)
-    smooth3D = to3D(smooth)
-    normals1 = normal(bevels,tangents)
+    sparseTangents = sparseArray(tangents, sampleRatio)
+    bevels = bevelVectors(sparseTangents, theta)
+    smooth3D = to3D(sparseSmooth)
+    normals1 = normal(bevels,sparseTangents)
     normals2 = flipZ(normals1)
     
     return smooth3D, normals1, normals2
+
+# def plot_sparse_and_tangent(blade_profile, theta):
+#     sigmaPos = 51
+#     sigmaTan = 101
+#     sampleRatio = 10
+
+#     # Process the blade profile
+#     smooth = profileSmoothing(blade_profile,sigmaPos)
+#     smooth = swapXY(smooth)
+#     sparseSmooth = sparseArray(smooth, sampleRatio)
+#     sparseSmooth = swapXY(sparseSmooth)
+#     tangents = tangent(smooth, sigmaTan)
+#     sparseTangents = sparseArray(tangents, sampleRatio)
+    
+#     sparseSmooth
+
+#     # Pick the 300th point
+#     p = sparseSmooth[300, :2]       # point on the curve (x, y only)
+#     t = sparseTangents[300, :2]     # tangent vector (x, y only)
+
+#     # Define a line along the tangent (for plotting)
+#     line_length = 500  # adjust as needed
+#     line_points = np.array([p - t*line_length, p + t*line_length])
+
+#     # 2D plot (x-y plane)
+#     plt.figure(figsize=(8,6))
+#     plt.plot(sparseSmooth[:,0], sparseSmooth[:,1], 'k-', label='Sparse Smooth Profile')
+#     plt.plot(line_points[:,0], line_points[:,1], 'r--', label='Tangent at point 300', linewidth=2)
+#     plt.scatter(p[0], p[1], color='blue', label='Point 300')
+
+#     plt.xlabel('X')
+#     plt.ylabel('Y')
+#     plt.axis('equal')
+#     plt.legend()
+#     plt.title('Sparse Blade Profile and Tangent Line')
+#     plt.show()
