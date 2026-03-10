@@ -61,6 +61,7 @@ def homography(path, blade_profile, debug=False):
     if debug: 
         warped_profile = warped_profile.astype(np.int32)  # <-- fix for polylines
         warped_img = cv2.warpPerspective(img, H, (int(1.1*w), int(1.1*h)))
+        # cv2.imwrite('warped.jpg', warped_img)
         common.dispContour(warped_img,warped_profile,"warped profile")
 
     relative_profile = ((warped_profile - pixel_origin) * scale).astype(np.int32)

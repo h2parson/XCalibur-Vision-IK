@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import savgol_filter
 from scipy.ndimage import gaussian_filter1d
 
 def profileSmoothing(blade_profile, sigma):
@@ -97,7 +96,6 @@ def knifeGeo(blade_profile, theta):
     sparseSmooth = sparseArray(smooth, sampleRatio)
     tangents = tangent(smooth, sigmaTan)
     bevels = bevelVectors(tangents, theta)
-    smooth3D = to3D(smooth)
     normals1 = normal(bevels,tangents)
     sparseTangents = sparseArray(tangents, sampleRatio)
     bevels = bevelVectors(sparseTangents, theta)
