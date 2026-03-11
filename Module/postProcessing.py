@@ -83,7 +83,7 @@ def to3D(smooth):
 
 def swapXY(arr):
     for i in range(len(arr)):
-        x = np.array([-arr[i][1], arr[i][0], arr[i][2]])
+        x = np.array([-arr[i][1], -arr[i][0], arr[i][2]])
         arr[i] = x
     return arr
 

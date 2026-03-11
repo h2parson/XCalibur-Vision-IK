@@ -12,7 +12,7 @@ import math
 
 # Constants
 path = "../rpiImages/bigPaper.jpg"
-global_offset = np.array([109.5-52,145.97-19,131.5], dtype=float)   # This is measured from a homed position
+global_offset = np.array([109.5-52,145.97+19,131.5], dtype=float)   # This is measured from a homed position
 bevel_angle = 15 # in degrees one-sided
 max_v = math.pi/10 # rad/sec
 

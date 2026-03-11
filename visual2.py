@@ -152,6 +152,19 @@ def update_shapes(shapes, q):
 
     T4 = sm.SE3(robot.fkine(q, end=robot.links[4]).A)
 
+    Tr = O * sm.SE3.Tx(r[0]) * sm.SE3.Ty(r[1]) * sm.SE3.Tz(r[2])
+
+    n_norm = np.array(n) / np.linalg.norm(n)
+    center = np.array(r) + n_norm * 0.05 / 2
+    z = np.array([0, 0, 1])
+    axis = np.cross(z, n_norm)
+    if np.linalg.norm(axis) < 1e-6:
+        T_arrow = sm.SE3.Tx(center[0]) * sm.SE3.Ty(center[1]) * sm.SE3.Tz(center[2])
+    else:
+        angle = np.arccos(np.clip(np.dot(z, n_norm), -1, 1))
+        axis = axis / np.linalg.norm(axis)
+        T_arrow = sm.SE3(center) * sm.SE3.AngleAxis(angle, axis)
+
     new_poses = [
         O,                                                      # sphere(O)
         O * sm.SE3.Tz(q[0] / 2),                               # cyl_z(q[0], O)
@@ -169,6 +182,8 @@ def update_shapes(shapes, q):
         T3_tx,                                                  # sphere(T3_tx)
         T3_tx * sm.SE3.Tz(q[4] / 2),                           # cyl_z(q[4], T3_tx)
         T4,                                                     # sphere(T4)
+        Tr,                                                     # sphere(Tr) red target
+        T_arrow,  
     ]
 
     for shape, pose in zip(shapes, new_poses):
@@ -277,19 +292,23 @@ shapes = build_shapes(q0,r,n)
 for s in shapes:
     env.add(s)
 
-dt = 0.03
 thr = 0.001
 
 while True:
     robot.q = q0
-    arrived = False
     qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
 
-    while not arrived:
+    r = profile[0]
+    n = normals[0]
+    r = mm_to_m_vec(r)
+    n = n/np.linalg.norm(n)
+
+    dt = 0.03
+
+    while True:
         qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
 
         if np.linalg.norm(e) < thr:
-            # print("converged!!!")
             break
 
         # Integrate velocity to get new joint positions
@@ -302,15 +321,66 @@ while True:
 
         update_shapes(shapes, robot.q)
 
-        # print("error norm = ", np.linalg.norm(e))
-        # print("position error = ", np.linalg.norm(e[:2]))
-        # print("orientation error = ", np.linalg.norm(e[3:]))
-        # print("joint velocities = ", qd)
-        # print("end effector position = ", robot.fkine(robot.q))
-        # print("joint variables = ", robot.q)
-
         env.step(dt)
 
-    sleep(1)
+    for i in range(1,len(profile)):
+        r = profile[i]
+        n = normals[i]
+        r = mm_to_m_vec(r)
+        n = n/np.linalg.norm(n)
+
+        qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
+        dt = 0.4
+
+        while True:
+            qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
+
+            if np.linalg.norm(e) < thr:
+                # print("converged!!!")
+                break
+
+            # Integrate velocity to get new joint positions
+            robot.q = robot.q + qd * dt
+
+            # Clamp to joint limits
+            for i, link in enumerate(robot.links):
+                if link.qlim is not None:
+                    robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
+
+            update_shapes(shapes, robot.q)
+
+            # print("error norm = ", np.linalg.norm(e))
+            # print("position error = ", np.linalg.norm(e[:2]))
+            # print("orientation error = ", np.linalg.norm(e[3:]))
+            # print("joint velocities = ", qd)
+            # print("end effector position = ", robot.fkine(robot.q))
+            # print("joint variables = ", robot.q)
+
+            env.step(dt)
+
+    qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
+
+    r = robot.fkine(q0).t
+    n = [0,0,1]
+
+    dt = 0.03
+
+    while True:
+        qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
+
+        if np.linalg.norm(e) < thr:
+            break
+
+        # Integrate velocity to get new joint positions
+        robot.q = robot.q + qd * dt
+
+        # Clamp to joint limits
+        for i, link in enumerate(robot.links):
+            if link.qlim is not None:
+                robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
+
+        update_shapes(shapes, robot.q)
+
+        env.step(dt)
 
 env.hold()
