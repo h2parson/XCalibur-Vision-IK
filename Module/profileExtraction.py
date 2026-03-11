@@ -27,7 +27,7 @@ def getBladeContour(img, debug=False):
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-    if debug: common.dispContour(mask, None, "closed and opened mask")
+    # if debug: common.dispContour(mask, None, "closed and opened mask")
 
     # Extract largest contour of mask to enclose the knife and optionally display
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -93,18 +93,6 @@ def getBladeContour(img, debug=False):
     if debug: common.dispContour(img, blade_profile, "blade profile")
 
     return blade_profile
-
-# images = getFilenames(r"C:\Users\h2par\OneDrive\Desktop\School\Terms\4B\MTE 482\Vision\rpiImages")
-
-# for file in images:
-#     print(file)
-#     hsv,img = loadHSV("../rpiImages/" + file)
-#     blade_profile = getBladeContour(hsv, debug=True)
-#     common.dispContour(img, blade_profile, file)
-
-# img = cv2.imread("../rpiImages/orange.jpg")
-# blade_profile = getBladeContour(img, debug=True)
-# common.dispContour(img, blade_profile, "blade profile")
 
 # np.save("blade_profile.npy", blade_profile)
 

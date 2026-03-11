@@ -1,6 +1,8 @@
 import roboticstoolbox as rtb
 import numpy as np
 from math import pi, degrees
+from matplotlib import pyplot as plt
+import time
 
 def robot():
     # Define the links
@@ -71,11 +73,31 @@ def ikPt(robot, r, n, q0,
     print("Did not converge")
     return None
 
+def animate_robot(robot, result, dt=0.01):
+
+    q_traj = np.array(result)
+
+    robot.plot(q_traj, dt=dt, block=False)
+
+    # compute tool path
+    pts = []
+    for q in q_traj:
+        T = robot.fkine(q)
+        pts.append(T.t)
+
+    pts = np.array(pts)
+
+    import matplotlib.pyplot as plt
+    ax = plt.gca()
+    ax.plot(pts[:,0], pts[:,1], pts[:,2], 'r')
+
+
 def ik(robot, rArr, nArr, 
                max_iter=200, 
                tol=1e-12,
                lam=0.5,
-               mu=1e-3):
+               mu=1e-3,
+               debug=False):
     # default params (before considering other offsets):
     # TODO: integrate these other offsets
     q0 = [0,0,pi/2,pi/2,0]
@@ -90,10 +112,7 @@ def ik(robot, rArr, nArr,
         q0 = q
         result.append(q)
 
-    return result
+    if debug:
+        animate_robot(robot,result)
 
-def degQ(q):
-    r = q.copy()
-    for i in range(1,4):
-        r[i] = degrees(r[i])
-    return r
+    return result

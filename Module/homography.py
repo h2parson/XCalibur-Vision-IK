@@ -18,6 +18,18 @@ def makeBaseArray(origin, spacing, checker_dimensions):
 
     return cornersBase
 
+def orderCorners(checker_dimensions, corners):
+    cols, rows = checker_dimensions
+    corners2 = corners.reshape(-1, 2)
+    corners_rows = corners2.reshape(rows, cols, 2)
+    order = np.argsort(np.mean(corners_rows[:,:,1], axis=1))
+    corners_rows = corners_rows[order]
+    for i in range(rows):
+        order = np.argsort(corners_rows[i,:,0])
+        corners_rows[i] = corners_rows[i][order]
+    corners = corners_rows.reshape(-1,1,2).astype(np.float32)
+    return corners
+
 def viewCorners(img, corners):
     h, w = img.shape[:2]
     output = img.copy()
@@ -44,6 +56,7 @@ def homography(path, blade_profile, debug=False):
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+    corners = orderCorners(checker_dimensions, corners)
     if debug: viewCorners(img, corners)
     
     pixel_origin = [200, 2000]

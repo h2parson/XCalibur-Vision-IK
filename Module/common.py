@@ -15,7 +15,7 @@ def dispImage(image, text):
 def dispContour(img, contour, text, isClosed=False):
     output = img.copy()
     if contour is not None:
-        cv2.polylines(output, [contour], isClosed=isClosed, color=(0, 255, 0), thickness=100)
+        cv2.polylines(output, [contour], isClosed=isClosed, color=(0, 255, 0), thickness=10)
     dispImage(output, text)
 
 def getFilenames(root_dir):
