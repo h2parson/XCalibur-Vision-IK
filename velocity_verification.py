@@ -134,7 +134,7 @@ def build_shapes(q, r, n, robot):
     ]
 
 # ─── Update shapes ───────────────────────────────────────────────────────────
-def update_shapes(shapes, q, r, n):
+def update_shapes(shapes, q, r):
     O = sm.SE3()
 
     T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
@@ -193,7 +193,7 @@ def update_shapes(shapes, q, r, n):
 knife = Mesh(
     filename=r"C:\Vision\CAD\8IN_GERMAN_CHEF_KNIFE.STL",
     scale=(0.001, 0.001, 0.001),
-    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.12)*sm.SE3.Rz(-pi/2)).A,
+    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.1185)*sm.SE3.Rz(-pi/2)).A,
     color=(1.0, 1.0, 0.0, 1.0)  # RGBA: yellow
 )
 
@@ -281,7 +281,7 @@ def go_dest(robot, q_dest, r, n, steps=50, dt=0.01):
     for i in range(steps + 1):
         alpha = i / steps  # 0 to 1
         robot.q = q_start + alpha * (q_dest - q_start)
-        update_shapes(shapes, robot.q, r, n)
+        update_shapes(shapes, robot.q, r)
         env.step(dt)
 
 if __name__ == "__main__":
@@ -305,16 +305,11 @@ if __name__ == "__main__":
     mid_end = data['arr_6']
     velocity = data['arr_7']
 
-
     q_dest = q1[0]
     r = profile[0]
     r = mm_to_m_vec(r)
     n = normals1[0]
     n = n/np.linalg.norm(n)
-
-    robot.q = q0
-    qd = q_err(robot,q_dest)
-    dt = 0.03
 
     shapes = build_shapes(q_dest,r,n,robot)
     for s in shapes:
@@ -330,33 +325,32 @@ if __name__ == "__main__":
     env.add(s_ms)
     env.add(s_me)
 
-    dt = 0.01
-    tol = 0
-
-    print(q1[0][2])
-    print(q1[1][2])
+    dt = 0.005
 
     while True:
-        # let's start at q[0] and move to q[1] using the velocity.
+        # start at hilt
         robot.q = q1[0]
-        update_shapes(shapes,robot.q, mm_to_m_vec(profile[0]), normals1[0])
-        qd = velocity[0]
-        print("qd = ", qd)
+        yaw_idx = 0
 
-        while (robot.q[2]-q1[1][2]) > tol:
-            print(robot.q[2]-q1[1][2])
-            robot.q = robot.q + qd*dt
-            update_shapes(shapes,robot.q,mm_to_m_vec(profile[1]), normals1[0])
+        # while the yaw hasn't reached the hilt
+        while robot.q[2] > q1[-1][2]:
+            # check if we got to next yaw index
+            if robot.q[2] <= q1[yaw_idx+1][2]:
+                yaw_idx += 1
+            
+            # with correct idx, get velocity and update
+            qd = velocity[yaw_idx]
+
+            robot.q = robot.q + dt*qd
+
+            pose = robot.fkine(robot.q)
+            update_shapes(shapes, robot.q, pose.t)
             env.step(dt)
 
-        robot.q = q1[1]
-        update_shapes(shapes,robot.q, mm_to_m_vec(profile[1]), normals1[1])
-        qd = -velocity[0]
-        print("qd = ", qd)
+        print("q actual = ", robot.q)
+        print("q desired = ", q1[yaw_idx])
 
-        while (robot.q[2]-q1[0][2]) < tol:
-            robot.q = robot.q + qd*dt
-            update_shapes(shapes,robot.q,mm_to_m_vec(profile[1]), normals1[0])
-            env.step(dt)
+        # print("done")
+        sleep(0.5)
 
     env.hold()

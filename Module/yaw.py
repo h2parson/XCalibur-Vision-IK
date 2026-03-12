@@ -22,7 +22,7 @@ def merge_yaw(q):
 def trim_yaw(q, left):
     q = np.array(q)
     trim_frac = 0.15
-    ramp_frac = [0.2,0.75]
+    ramp_frac = [0.2,0.8]
     range_ = q[0][2]-q[-1][2]
 
     if left:
@@ -36,16 +36,19 @@ def trim_yaw(q, left):
 
     start = trimmed[0][2]
     range_ = trimmed[-1][2] - trimmed[0][2]
+ 
     if left:
         mid_start = np.where(trimmed[:,2] <= start+ramp_frac[0]*range_)[0][0]
         mid_end = np.where(trimmed[:,2] < start+ramp_frac[1]*range_)[0][0]
     else:
         mid_start = np.where(trimmed[:,2] >= start+ramp_frac[0]*range_)[0][0]
         mid_end = np.where(trimmed[:,2] > start+ramp_frac[1]*range_)[0][0]
+        print(mid_start)
+        print(mid_end)
 
     return trimmed, start, range_, mid_start, mid_end
 
 def process_yaw(q, left):
     q = merge_yaw(q)
-    q = trim_yaw(q,left)
-    return q
+    q, start, range_, mid_start, mid_end = trim_yaw(q,left)
+    return q, start, range_, mid_start, mid_end

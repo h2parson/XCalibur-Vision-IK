@@ -347,7 +347,7 @@ if __name__ == "__main__":
             n = normals1[i]
             n = n/np.linalg.norm(n)
 
-            go_dest(robot, q_dest, r, n, steps=1, dt = 0.0001)
+            go_dest(robot, q_dest, r, n, steps=1, dt = 0.01)
 
         #return
         q_dest = q0

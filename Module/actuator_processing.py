@@ -19,22 +19,23 @@ from scipy.ndimage import gaussian_filter1d
 
 # For now I will not smooth and use only crude estimate of velocity
 
-def velocity(q, max_v, start, range_, mid_start, mid_end):
+def velocity(q, max_v, min_v, start, range_, mid_start, mid_end):
+    # TODO: make bidirectional with min velocity at start and 0 at end
     velocity = [[0]* 5 for i in range(len(q)-1)]
-    sign = np.sign(q[-1]-q[0])
-
-    slope = sign[2]*max_v/(q[mid_start-1][2])                 # First 3rd of blade
+    sgn = np.sign(q[-1][2]-q[0][2])
+    
+    slope = (max_v-min_v)/(q[mid_start-1][2]-start)                 # First 3rd of blade
     for j in range(mid_start):
-        velocity[j][2] = slope * q[j][2]              # Middle portion
-    for j in range(mid_start,mid_end+1):
-        velocity[j][2] = sign[2]*max_v
-    slope = -sign[2]*max_v/(start + range_ - q[mid_end+1][2]) # Last 3rd of blade
+        velocity[j][2] = sgn*(slope * (q[j][2]-start) + min_v)
+    for j in range(mid_start,mid_end+1):                    # Middle portion
+        velocity[j][2] = sgn*(max_v)
+    slope = -max_v/(start + range_ - q[mid_end+1][2])       # Last 3rd of blade
     for j in range(mid_end+1,len(velocity)):
-        velocity[j][2] = slope * q[j][2]
+        velocity[j][2] = sgn*(slope * (q[j][2] - (start+range_)))
 
     # loop over others
     for i in (0,1,3,4):
         for j in range(len(velocity)):
-            velocity[j][i] = sign[i]*((q[j+1][i]-q[j][i])/(q[j+1][2]-q[j][2])) * velocity[j][2]
+            velocity[j][i] = ((q[j+1][i]-q[j][i])/(q[j+1][2]-q[j][2])) * velocity[j][2]
     
     return velocity
