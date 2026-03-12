@@ -69,7 +69,7 @@ def normal(b_list,v_list):
         b = b_list[i]
         v = v_list[i]
 
-        c = np.cross(b, v)
+        c = np.cross(v,b)
         c = c/np.linalg.norm(c)
         result.append(c)
     return result

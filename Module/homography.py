@@ -27,7 +27,7 @@ def orderCorners(checker_dimensions, corners):
     for i in range(rows):
         order = np.argsort(corners_rows[i,:,0])
         corners_rows[i] = corners_rows[i][order]
-    corners = corners_rows.reshape(-1,1,2).astype(np.float32)
+    corners = corners_rows.reshape(-1,1,2).astype(np.float64)
     return corners
 
 def viewCorners(img, corners):
@@ -69,7 +69,7 @@ def homography(path, blade_profile, debug=False):
     # Compute homography
     H, mask = cv2.findHomography(corners, cornersBase, cv2.RANSAC)
 
-    warped_profile = cv2.perspectiveTransform(blade_profile.astype(np.float32), H)
+    warped_profile = cv2.perspectiveTransform(blade_profile.astype(np.float64), H)
 
     if debug: 
         warped_profile = warped_profile.astype(np.int32)  # <-- fix for polylines

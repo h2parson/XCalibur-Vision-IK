@@ -54,8 +54,8 @@ def getBladeContour(img, debug=False):
     slope_samples = 50
     clampRight = 2000  # approximate coordinate of right end of clamp
 
-    x_full = top_contour[:, 0, 0].astype(np.float32)
-    y_full = top_contour[:, 0, 1].astype(np.float32)
+    x_full = top_contour[:, 0, 0].astype(np.float64)
+    y_full = top_contour[:, 0, 1].astype(np.float64)
     right_mask = x_full >= clampRight
     x_right = x_full[right_mask] 
     y_right = y_full[right_mask]
@@ -72,8 +72,8 @@ def getBladeContour(img, debug=False):
     slope_samples = 50
     clampLeft = 1000  # approximate coordinate of left part of image
 
-    x_full = top_contour[:, 0, 0].astype(np.float32)
-    y_full = top_contour[:, 0, 1].astype(np.float32)
+    x_full = top_contour[:, 0, 0].astype(np.float64)
+    y_full = top_contour[:, 0, 1].astype(np.float64)
     left_mask = x_full <= clampLeft
     x_left = x_full[left_mask] 
     y_left = y_full[left_mask]

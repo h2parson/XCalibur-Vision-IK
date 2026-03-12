@@ -1,22 +1,32 @@
 import roboticstoolbox as rtb
+from roboticstoolbox import ET
 import numpy as np
 from math import pi, degrees
 from matplotlib import pyplot as plt
 import time
 
-def robot():
-    # Define the links
-    # First, the underpass
-    L1 = rtb.PrismaticMDH(theta=0, a=0, alpha=0, qlim=[0, 198])
-    L2 = rtb.RevoluteMDH(a=29, alpha=-pi/2, d=-12.5, qlim=[0, 2*pi])
-    L3 = rtb.RevoluteMDH(a=27.5, alpha=pi/2, d=-0, qlim=[0, 2*pi])
-    L4 = rtb.RevoluteMDH(a=0, alpha=pi/2, d=68.23, qlim=[0, 2*pi])
-    L5 = rtb.PrismaticMDH(theta=0, a=29.74, alpha=0, qlim=[0, 95])
+robot = rtb.Robot(
+    rtb.ETS([
+        ET.tz(qlim=[0, 0.198]),
 
-    # Create robot
-    robot = rtb.DHRobot([L1, L2, L3, L4, L5], name="Robot")
+        ET.tx(0.029),
+        ET.Rx(-pi/2),
+        ET.tz(0.0125),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
 
-    return robot
+        ET.Rx(pi/2),
+        ET.tx(0.0275),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
+
+        ET.Rx(pi/2),
+        ET.tz(0.06823),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
+
+        ET.tx(0.02974),
+        ET.tz(qlim=[0, 0.095]),
+    ]),
+    name="XCalibur"
+)
 
 def skew(v):
     return np.array([
@@ -25,76 +35,74 @@ def skew(v):
         [-v[1], v[0], 0]
     ])
 
+def mm_to_m_vec(v):
+    result = [0,0,0]
+    for i in range(3):
+        result[i] = v[i]/1000.0
+    return result
+ 
+
 def ikPt(robot, r, n, q0, 
-               max_iter=200, 
-               tol=1e-12,
-               lam=0.5,
+               max_iter=100, 
+               tol=1e-4,
+               lam=1,
                mu=1e-3):
     
     n = n / np.linalg.norm(n)
-    q = q0.copy()
+    r = mm_to_m_vec(r)
+    robot.q = q0
+    qd = [0.0, 0.0, 0.0, 0.0, 0.0]
     
     for i in range(max_iter):
-        
+        n = n / np.linalg.norm(n)
+
         # Forward kinematics
-        T = robot.fkine(q)
+        T = robot.fkine(robot.q)
         p = T.t
         R = T.R
-        
+
         x_axis = R[:, 0]
-        
+
         # ---- Error vector ----
         pos_error = p - r
         orient_error = np.cross(x_axis, n)
-        
+
         e = np.hstack((pos_error, orient_error))
-        
-        if np.linalg.norm(e) < tol:
-            # print("Converged in", i, "iterations")
-            return q
-        
+
         # ---- Jacobian ----
-        J = robot.jacob0(q)      # 6 x n
+        J = robot.jacob0(robot.q)      # 6 x n
         Jv = J[0:3, :]
         Jw = J[3:6, :]
-        
+
         # Orientation task Jacobian
         Jo = skew(n) @ skew(x_axis) @ Jw
-        
+
         J_task = np.vstack((Jv, Jo))
-        
+
         # ---- Damped Least Squares ----
         JJt = J_task @ J_task.T
         J_pinv = J_task.T @ np.linalg.inv(JJt + mu**2 * np.eye(6))
-        
+
         # Update
-        q = q - lam * J_pinv @ e
+        qd = - lam * J_pinv @ e
+
+        if np.linalg.norm(e) < tol:
+            return robot.q
+
+        # Integrate velocity to get new joint positions
+        robot.q = robot.q + qd
+
+        # Clamp to joint limits
+        for i, link in enumerate(robot.links):
+            if link.qlim is not None:
+                robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
         
     print("Did not converge")
     return None
 
-def animate_robot(robot, result, dt=0.01):
-
-    q_traj = np.array(result)
-
-    robot.plot(q_traj, dt=dt, block=False)
-
-    # compute tool path
-    pts = []
-    for q in q_traj:
-        T = robot.fkine(q)
-        pts.append(T.t)
-
-    pts = np.array(pts)
-
-    import matplotlib.pyplot as plt
-    ax = plt.gca()
-    ax.plot(pts[:,0], pts[:,1], pts[:,2], 'r')
-
-
 def ik(robot, rArr, nArr, 
-               max_iter=200, 
-               tol=1e-12,
+               max_iter=100, 
+               tol=1e-4,
                lam=0.5,
                mu=1e-3,
                debug=False):
@@ -111,8 +119,5 @@ def ik(robot, rArr, nArr,
             print(nArr[i])
         q0 = q
         result.append(q)
-
-    if debug:
-        animate_robot(robot,result)
 
     return result
