@@ -3,7 +3,7 @@ from profileExtraction import profileExtraction
 from homography import homography
 from postProcessing import knifeGeo
 from IK import ik, robot
-from trim_yaw import trim_yaw
+from yaw import process_yaw
 from actuator_processing import velocity
 
 import time
@@ -27,14 +27,14 @@ relative_profile = homography(path, blade_profile, debug=False) # in mm relative
 profile, normals = knifeGeo(relative_profile, bevel_angle)      # compute normals vectors and switch to global coords
 profile = (profile + global_offset)                             # locate within global coords                                               # create kinematic model
 q1 = ik(robot, profile, normals, q0[1], debug=False)            # compute first side joint angles
-q1, start, range_, mid_start, mid_end = trim_yaw(q1, True)
-# velocity = velocity(q1,max_v,start,range_,mid_start,mid_end)
+q1, start, range_, mid_start, mid_end = process_yaw(q1, True)   # ensure yaw monotonic and segment profile
+velocity = velocity(q1,max_v,start,range_,mid_start,mid_end)
 
 # q2 = ik(robot, profile, common.flipZ(normals), q0[2])            # compute other side
 # q2 = trim_yaw(q2, True)
 
 # np.savez("knife_data.npz", q1)
-np.savez("knife_data.npz", q1, [], normals, common.flipZ(normals), profile, mid_start, mid_end)
+np.savez("knife_data.npz", q1, [], normals, common.flipZ(normals), profile, mid_start, mid_end, velocity)
 # np.savez("knife_data.npz", q1, normals, profile, velocity, start, range_, mid_start, mid_end)
 
 # Output over USB

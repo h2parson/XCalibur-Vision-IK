@@ -21,19 +21,20 @@ from scipy.ndimage import gaussian_filter1d
 
 def velocity(q, max_v, start, range_, mid_start, mid_end):
     velocity = [[0]* 5 for i in range(len(q)-1)]
+    sign = np.sign(q[-1]-q[0])
 
-    slope = max_v/(q[mid_start-1][2])                 # First 3rd of blade
+    slope = sign[2]*max_v/(q[mid_start-1][2])                 # First 3rd of blade
     for j in range(mid_start):
         velocity[j][2] = slope * q[j][2]              # Middle portion
     for j in range(mid_start,mid_end+1):
-        velocity[j][2] = max_v
-    slope = -max_v/(start + range_ - q[mid_end+1][2]) # Last 3rd of blade
+        velocity[j][2] = sign[2]*max_v
+    slope = -sign[2]*max_v/(start + range_ - q[mid_end+1][2]) # Last 3rd of blade
     for j in range(mid_end+1,len(velocity)):
         velocity[j][2] = slope * q[j][2]
 
     # loop over others
     for i in (0,1,3,4):
         for j in range(len(velocity)):
-            velocity[j][i] = ((q[j+1][i]-q[j][i])/(q[j+1][2]-q[j][2])) * velocity[j][2]
+            velocity[j][i] = sign[i]*((q[j+1][i]-q[j][i])/(q[j+1][2]-q[j][2])) * velocity[j][2]
     
     return velocity

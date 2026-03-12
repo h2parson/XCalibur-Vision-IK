@@ -1,5 +1,24 @@
 import numpy as np
 
+def merge_yaw(q):
+    q = np.array(q)
+    result = []
+    i = 0
+
+    while i < len(q):
+        # Find end of block where q[:,2] is constant
+        j = i + 1
+        while j < len(q) and q[j][2] == q[i][2]:
+            j += 1
+
+        # Average the block q[i:j] across all joint variables
+        block = q[i:j]
+        result.append(np.mean(block, axis=0))
+
+        i = j
+
+    return np.array(result)
+
 def trim_yaw(q, left):
     q = np.array(q)
     trim_frac = 0.15
@@ -25,3 +44,8 @@ def trim_yaw(q, left):
         mid_end = np.where(trimmed[:,2] > start+ramp_frac[1]*range_)[0][0]
 
     return trimmed, start, range_, mid_start, mid_end
+
+def process_yaw(q, left):
+    q = merge_yaw(q)
+    q = trim_yaw(q,left)
+    return q
