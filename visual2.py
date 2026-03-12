@@ -13,7 +13,7 @@ RADIUS = 0.004  # 4mm in metres
 # ─── Robot Definition ────────────────────────────────────────────────────────
 robot = rtb.Robot(
     rtb.ETS([
-        ET.tz(qlim=[0, 0.198]),
+        ET.tz(qlim=[0, 0.265]),
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
@@ -192,7 +192,7 @@ def update_shapes(shapes, q):
 knife = Mesh(
     filename=r"C:\Vision\CAD\8IN_GERMAN_CHEF_KNIFE.STL",
     scale=(0.001, 0.001, 0.001),
-    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.12)*sm.SE3.Rz(-pi/2)).A,
+    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.1175)*sm.SE3.Rz(-pi/2)).A,
     color=(1.0, 1.0, 0.0, 1.0)  # RGBA: yellow
 )
 
@@ -295,6 +295,7 @@ for s in shapes:
 
 thr = 1e-3
 
+# '''
 while True:
     robot.q = q0
     qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
@@ -385,46 +386,50 @@ while True:
         update_shapes(shapes, robot.q)
 
         env.step(dt)
+'''
 
-# p_thr = 0.0005
-# # o_thr = sin(radians(1))
-# dt = 1
-# max_iter = 1000
+p_thr = 0.0005
+# o_thr = sin(radians(1))
+dt = 1
+max_iter = 1000
 
-# # while True:
-# iter = 0
-# robot.q = q0
-# qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
-# r =  [0.1095, 0.14597, 0.1315]
-# n = [ 0.22133524,  0.09916774, -0.9701425 ]
-# # r = mm_to_m_vec(r)
-# n = n/np.linalg.norm(n)
-# # dt = 0.03
-# while iter < max_iter:
-#     iter += 1
-#     qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
-#     if np.linalg.norm(e) < p_thr:
-#         break
+# while True:
+iter = 0
+q0 = [robot.links[0].qlim[1],0,pi/2,-pi/2,0]
+robot.q = q0
+qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
+r =  [0.1095, 0.14597, 0.1315]
+n = [ 0.22133524,  0.09916774, 0.9701425 ]
+# r = mm_to_m_vec(r)
+n = n/np.linalg.norm(n)
+# dt = 0.03
+while iter < max_iter:
+    iter += 1
+    qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
+    if np.linalg.norm(e) < p_thr:
+        break
 
-#     print(iter)
-#     print(np.linalg.norm(e))
-#     print(robot.q)
-#     # Integrate velocity to get new joint positions
-#     robot.q = robot.q + qd * dt
-#     # Clamp to joint limits
-#     for i, link in enumerate(robot.links):
-#         if link.qlim is not None:
-#             robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
-#     update_shapes(shapes, robot.q)
-#     env.step(dt)
-#     # print("position error = ", np.linalg.norm(e[:2]))
-#     # print("orientation error = ", np.linalg.norm(e[3:]))
-#     # print("joint variables = ", robot.q)
-# if iter >= max_iter:
-#     print("did not converge")
-# else:
-#     print("converged! in iterations:", iter)
+    print(iter)
+    print(np.linalg.norm(e))
+    print(robot.q)
+    # Integrate velocity to get new joint positions
+    robot.q = robot.q + qd * dt
+    # Clamp to joint limits
+    for i, link in enumerate(robot.links):
+        if link.qlim is not None:
+            robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
+    update_shapes(shapes, robot.q)
+    env.step(dt)
+    # print("position error = ", np.linalg.norm(e[:2]))
+    # print("orientation error = ", np.linalg.norm(e[3:]))
+    # print("joint variables = ", robot.q)
+if iter >= max_iter:
+    print("did not converge")
+else:
+    print("converged! in iterations:", iter)
 
-#     sleep(1)
+    sleep(1)
+
+'''
 
 env.hold()

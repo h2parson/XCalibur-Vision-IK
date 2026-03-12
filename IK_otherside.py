@@ -7,20 +7,43 @@ import time
 
 robot = rtb.Robot(
     rtb.ETS([
-        ET.tz(qlim=[0, 0.265]),
+        ET.tz(qlim=[0, 0.198]),
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
         ET.tz(0.0125),
-        ET.Rz(qlim=[-pi, pi]),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.Rx(pi/2),
         ET.tx(0.0275),
-        ET.Rz(qlim=[-pi, pi]),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.Rx(pi/2),
         ET.tz(0.06823),
-        ET.Rz(qlim=[-pi, pi]),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
+
+        ET.tx(0.02974),
+        ET.tz(qlim=[0, 0.095]),
+    ]),
+    name="XCalibur"
+)
+
+robot2 = rtb.Robot(
+    rtb.ETS([
+        ET.tz(qlim=[0, 0.198]),
+
+        ET.tx(0.029),
+        ET.Rx(-pi/2),
+        ET.tz(0.0125),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
+
+        ET.Rx(pi/2),
+        ET.tx(0.0275),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
+
+        ET.Rx(pi/2),
+        ET.tz(0.06823),
+        ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.tx(0.02974),
         ET.tz(qlim=[0, 0.095]),
@@ -43,9 +66,9 @@ def mm_to_m_vec(v):
  
 
 def ikPt(robot, r, n, q0, 
-               max_iter=100, 
+               max_iter=20, 
                tol=1e-4,
-               lam=1,
+               lam=0.5,
                mu=1e-3):
     
     n = n / np.linalg.norm(n)
@@ -100,14 +123,15 @@ def ikPt(robot, r, n, q0,
     print("Did not converge")
     return None
 
-def ik(robot, rArr, nArr, q0,
-               max_iter=100, 
+def ik(robot, rArr, nArr, 
+               max_iter=20, 
                tol=1e-4,
                lam=0.5,
                mu=1e-3,
                debug=False):
     # default params (before considering other offsets):
     # TODO: integrate these other offsets
+    q0 = [0,0,pi/2,pi/2,0]
     result = []
 
     for i in range(len(rArr)):
@@ -120,3 +144,60 @@ def ik(robot, rArr, nArr, q0,
         result.append(q)
 
     return result
+
+'''
+r,n
+[0.1095, 0.14597, 0.1315]
+[ 0.22133524  0.09916774 -0.9701425 ]
+we will flip the z
+also needs to be in mm
+'''
+
+r = [109.5, 145.97, 131.5]
+n1 = [0.22133524,  0.09916774, -0.9701425]
+n2 = [0.22133524,  0.09916774, 0.9701425]
+
+q0 = [0,0,pi/2,pi/2,0]
+
+q1 = ikPt(robot, r, n1, q0)
+q2 = ikPt(robot, r, n2, q0)
+
+print(q1)
+print(q2)
+
+'''
+[ 0.06320401 -0.42515972  2.67863874  1.79462266  0.08419678]
+[0.13948851 0.46254657 2.74215712 1.3130148  0.07342402]
+'''
+
+#lets see how these look
+
+import roboticstoolbox as rtb
+import swift
+from math import pi
+from spatialgeometry import Cylinder, Sphere
+import spatialmath as sm
+from roboticstoolbox import ET
+import numpy as np
+from spatialgeometry import Mesh
+from time import sleep
+
+from verify_kinematics import knife, build_shapes
+
+env = swift.Swift()
+env.launch(realtime=True)
+env.add(robot)
+env.add(robot2)
+env.add(knife)
+
+r = mm_to_m_vec(r)
+
+shapes = build_shapes(q1,r,n1,robot)
+for s in shapes:
+    env.add(s)
+
+shapes = build_shapes(q2,r,n2,robot2)
+for s in shapes:
+    env.add(s)
+
+env.hold()

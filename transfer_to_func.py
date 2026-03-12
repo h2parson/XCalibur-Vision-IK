@@ -1,6 +1,6 @@
 import roboticstoolbox as rtb
 import swift
-from math import pi
+from math import pi, sin, radians, degrees
 from spatialgeometry import Cylinder, Sphere
 import spatialmath as sm
 from roboticstoolbox import ET
@@ -74,7 +74,7 @@ def make_normal_arrow(r, n, length=0.05, color=(1.0, 0.0, 0.0, 1.0)):
 
     return Cylinder(radius=RADIUS, length=length, pose=T.A, color=color)
 
-def build_shapes(q, r, n, robot):
+def build_shapes(q, r, n):
     O = sm.SE3()
 
     T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
@@ -133,7 +133,7 @@ def build_shapes(q, r, n, robot):
     ]
 
 # ─── Update shapes ───────────────────────────────────────────────────────────
-def update_shapes(shapes, q, r, n):
+def update_shapes(shapes, q):
     O = sm.SE3()
 
     T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
@@ -216,12 +216,6 @@ def mm_to_m_vec(v):
         result[i] = v[i]/1000.0
     return result
 
-def convert_q(q):
-    result = q.copy()
-    result[0] = result[0]/1000
-    result[4] = result[4]/1000
-    return result
-
 def skew(v):
     return np.array([
         [0, -v[2], v[1]],
@@ -268,142 +262,150 @@ def joint_v(robot, r, n, q,
 
     return qd, e
 
-def q_err(robot, q_dest):
-    e = q_dest - robot.q
-    
-    return e
+def skew(v):
+    return np.array([
+        [0, -v[2], v[1]],
+        [v[2], 0, -v[0]],
+        [-v[1], v[0], 0]
+    ])
 
-def go_dest(robot, q_dest, r, n, steps=50, dt=0.01):
-    q_start = robot.q.copy()
-    q_dest = np.array(q_dest)
-    
-    for i in range(steps + 1):
-        alpha = i / steps  # 0 to 1
-        robot.q = q_start + alpha * (q_dest - q_start)
-        update_shapes(shapes, robot.q, r, n)
-        env.step(dt)
+def mm_to_m_vec(v):
+    result = [0,0,0]
+    for i in range(3):
+        result[i] = v[i]/1000.0
+    return result
+ 
 
-# def ikPt(robot, r, n, q0, 
+def ikPt(robot, r, n, q0, 
+               max_iter=100, 
+               tol=1e-4,
+               lam=1,
+               mu=1e-3):
+    
+    n = n / np.linalg.norm(n)
+    r = mm_to_m_vec(r)
+    robot.q = q0
+    qd = [0.0, 0.0, 0.0, 0.0, 0.0]
+    
+    for i in range(max_iter):
+        n = n / np.linalg.norm(n)
+
+        # Forward kinematics
+        T = robot.fkine(robot.q)
+        p = T.t
+        R = T.R
+
+        x_axis = R[:, 0]
+
+        # ---- Error vector ----
+        pos_error = p - r
+        orient_error = np.cross(x_axis, n)
+
+        e = np.hstack((pos_error, orient_error))
+
+        # ---- Jacobian ----
+        J = robot.jacob0(robot.q)      # 6 x n
+        Jv = J[0:3, :]
+        Jw = J[3:6, :]
+
+        # Orientation task Jacobian
+        Jo = skew(n) @ skew(x_axis) @ Jw
+
+        J_task = np.vstack((Jv, Jo))
+
+        # ---- Damped Least Squares ----
+        JJt = J_task @ J_task.T
+        J_pinv = J_task.T @ np.linalg.inv(JJt + mu**2 * np.eye(6))
+
+        # Update
+        qd = - lam * J_pinv @ e
+
+        if np.linalg.norm(e) < tol:
+            return robot.q
+
+        # Integrate velocity to get new joint positions
+        robot.q = robot.q + qd
+
+        # Clamp to joint limits
+        for i, link in enumerate(robot.links):
+            if link.qlim is not None:
+                robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
+        
+    print("Did not converge")
+    return None
+
+# def ik(robot, rArr, nArr, q0,
 #                max_iter=100, 
 #                tol=1e-4,
-#                lam=1,
-#                mu=1e-3):
-    
-#     n = n / np.linalg.norm(n)
-#     qd = [0.0, 0.0, 0.0, 0.0, 0.0]
-#     r =  [0.1095, 0.14597, 0.1315]
-#     n = [ 0.22133524,  0.09916774, -0.9701425 ]
-#     n = n/np.linalg.norm(n)
-    
-#     for i in range(max_iter):
-#         n = n / np.linalg.norm(n)
+#                lam=0.5,
+#                mu=1e-3,
+#                debug=False):
+#     # default params (before considering other offsets):
+#     # TODO: integrate these other offsets
+#     result = []
 
-#         # Forward kinematics
-#         T = robot.fkine(robot.q)
-#         p = T.t
-#         R = T.R
+#     for i in range(len(rArr)):
+#         q = ikPt(robot, rArr[i], nArr[i], q0, max_iter, tol, lam, mu)
+#         if q is None:
+#             print(i)
+#             print(rArr[i])
+#             print(nArr[i])
+#         q0 = q
+#         result.append(q)
 
-#         x_axis = R[:, 0]
+#     return result
 
-#         # ---- Error vector ----
-#         pos_error = p - r
-#         orient_error = np.cross(x_axis, n)
+env = swift.Swift()
+env.launch(realtime=True)
+env.add(robot)
+env.add(knife)
 
-#         e = np.hstack((pos_error, orient_error))
+p_thr = 0.0005
+# o_thr = sin(radians(1))
+dt = 1
+max_iter = 1000
 
-#         # ---- Jacobian ----
-#         J = robot.jacob0(robot.q)      # 6 x n
-#         Jv = J[0:3, :]
-#         Jw = J[3:6, :]
+# while True:
+iter = 0
+q0 = [robot.links[0].qlim[1],0,pi/2,-pi/2,0]
+robot.q = q0
+qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
+r =  [0.1095, 0.14597, 0.1315]
+n = [ 0.22133524,  0.09916774, 0.9701425 ]
+# r = mm_to_m_vec(r)
+n = n/np.linalg.norm(n)
+# dt = 0.03
 
-#         # Orientation task Jacobian
-#         Jo = skew(n) @ skew(x_axis) @ Jw
+shapes = build_shapes(robot.q,r,n,robot)
+for s in shapes:
+    env.add(s)
 
-#         J_task = np.vstack((Jv, Jo))
+while iter < max_iter:
+    iter += 1
+    
+    qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
+    if np.linalg.norm(e) < p_thr:
+        break
 
-#         # ---- Damped Least Squares ----
-#         JJt = J_task @ J_task.T
-#         J_pinv = J_task.T @ np.linalg.inv(JJt + mu**2 * np.eye(6))
+    print(iter)
+    print(np.linalg.norm(e))
+    print(robot.q)
+    # Integrate velocity to get new joint positions
+    robot.q = robot.q + qd * dt
+    # Clamp to joint limits
+    for i, link in enumerate(robot.links):
+        if link.qlim is not None:
+            robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
+    update_shapes(shapes, robot.q)
+    env.step(dt)
+    # print("position error = ", np.linalg.norm(e[:2]))
+    # print("orientation error = ", np.linalg.norm(e[3:]))
+    # print("joint variables = ", robot.q)
+if iter >= max_iter:
+    print("did not converge")
+else:
+    print("converged! in iterations:", iter)
 
-#         # Update
-#         qd = - lam * J_pinv @ e
+    sleep(1)
 
-#         if np.linalg.norm(e) < tol:
-#             print("iterations ", i)
-#             return robot.q
-
-#         # Integrate velocity to get new joint positions
-#         robot.q = robot.q + qd
-
-#         # Clamp to joint limits
-#         for i, link in enumerate(robot.links):
-#             if link.qlim is not None:
-#                 robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
-        
-#     print("Did not converge")
-#     return None
-
-if __name__ == "__main__":
-    
-    # ─── Launch ──────────────────────────────────────────────────────────────────
-    env = swift.Swift()
-    env.launch(realtime=True)
-    env.add(robot)
-    env.add(knife)
-    
-    q0 = [0,0,pi/2,pi/2,0]
-    robot.q = q0
-    
-    # autozoom(env, robot, q0, scale=1.0)
-    
-    data = np.load("knife_data.npz")
-    q = data['arr_0']
-    normals = data['arr_1']
-    profile = data['arr_2']
-    
-    
-    q_dest = q[0]
-    r = profile[0]
-    r = mm_to_m_vec(r)
-    n = normals[0]
-    n = n/np.linalg.norm(n)
-    
-    print(r)
-    print(n)
-    
-    robot.q = q0
-    qd = q_err(robot,q_dest)
-    dt = 0.03
-    
-    shapes = build_shapes(q_dest,r,n,robot)
-    for s in shapes:
-        env.add(s)
-    
-    while True:
-        q_dest = q[0]
-        r = profile[0]
-        r = mm_to_m_vec(r)
-        n = normals[0]
-        n = n/np.linalg.norm(n)
-    
-        go_dest(robot, q_dest, r, n)
-    
-        for i in range(1,len(q)):
-            q_dest = q[i]
-            r = profile[i]
-            r = mm_to_m_vec(r)
-            n = normals[i]
-            n = n/np.linalg.norm(n)
-    
-            go_dest(robot, q_dest, r, n, steps=1, dt = 0.0001)
-    
-        q_dest = q0
-        r = robot.fkine(q_dest).t
-        n = [0,0,1]
-    
-        go_dest(robot, q_dest, r, n)
-    
-    
-    
-    env.hold()
-    
+env.hold()
