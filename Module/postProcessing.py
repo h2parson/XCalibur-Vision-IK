@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import savgol_filter
 from scipy.ndimage import gaussian_filter1d
 
 def profileSmoothing(blade_profile, sigma):
@@ -70,7 +69,7 @@ def normal(b_list,v_list):
         b = b_list[i]
         v = v_list[i]
 
-        c = np.cross(b, v)
+        c = np.cross(v,b)
         c = c/np.linalg.norm(c)
         result.append(c)
     return result
@@ -84,7 +83,7 @@ def to3D(smooth):
 
 def swapXY(arr):
     for i in range(len(arr)):
-        x = np.array([arr[i][1], -arr[i][0], arr[i][2]])
+        x = np.array([-arr[i][1], -arr[i][0], arr[i][2]])
         arr[i] = x
     return arr
 
@@ -97,7 +96,6 @@ def knifeGeo(blade_profile, theta):
     sparseSmooth = sparseArray(smooth, sampleRatio)
     tangents = tangent(smooth, sigmaTan)
     bevels = bevelVectors(tangents, theta)
-    smooth3D = to3D(smooth)
     normals1 = normal(bevels,tangents)
     sparseTangents = sparseArray(tangents, sampleRatio)
     bevels = bevelVectors(sparseTangents, theta)

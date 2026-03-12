@@ -27,7 +27,7 @@ def getBladeContour(img, debug=False):
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-    if debug: common.dispContour(mask, None, "closed and opened mask")
+    # if debug: common.dispContour(mask, None, "closed and opened mask")
 
     # Extract largest contour of mask to enclose the knife and optionally display
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -54,8 +54,8 @@ def getBladeContour(img, debug=False):
     slope_samples = 50
     clampRight = 2000  # approximate coordinate of right end of clamp
 
-    x_full = top_contour[:, 0, 0].astype(np.float32)
-    y_full = top_contour[:, 0, 1].astype(np.float32)
+    x_full = top_contour[:, 0, 0].astype(np.float64)
+    y_full = top_contour[:, 0, 1].astype(np.float64)
     right_mask = x_full >= clampRight
     x_right = x_full[right_mask] 
     y_right = y_full[right_mask]
@@ -72,8 +72,8 @@ def getBladeContour(img, debug=False):
     slope_samples = 50
     clampLeft = 1000  # approximate coordinate of left part of image
 
-    x_full = top_contour[:, 0, 0].astype(np.float32)
-    y_full = top_contour[:, 0, 1].astype(np.float32)
+    x_full = top_contour[:, 0, 0].astype(np.float64)
+    y_full = top_contour[:, 0, 1].astype(np.float64)
     left_mask = x_full <= clampLeft
     x_left = x_full[left_mask] 
     y_left = y_full[left_mask]
@@ -93,18 +93,6 @@ def getBladeContour(img, debug=False):
     if debug: common.dispContour(img, blade_profile, "blade profile")
 
     return blade_profile
-
-# images = getFilenames(r"C:\Users\h2par\OneDrive\Desktop\School\Terms\4B\MTE 482\Vision\rpiImages")
-
-# for file in images:
-#     print(file)
-#     hsv,img = loadHSV("../rpiImages/" + file)
-#     blade_profile = getBladeContour(hsv, debug=True)
-#     common.dispContour(img, blade_profile, file)
-
-# img = cv2.imread("../rpiImages/orange.jpg")
-# blade_profile = getBladeContour(img, debug=True)
-# common.dispContour(img, blade_profile, "blade profile")
 
 # np.save("blade_profile.npy", blade_profile)
 
