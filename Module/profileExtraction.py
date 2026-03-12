@@ -94,12 +94,8 @@ def getBladeContour(img, debug=False):
 
     return blade_profile
 
-# np.save("blade_profile.npy", blade_profile)
-
 def profileExtraction(path, debug=False):
     img = cv2.imread(path)
     blade_profile = getBladeContour(img, debug=debug)
     if debug: common.dispContour(img, blade_profile, "blade profile")
     return blade_profile
-
-# profileExtraction("../rpiImages/orange.jpg")

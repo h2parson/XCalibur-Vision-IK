@@ -26,7 +26,7 @@ blade_profile = profileExtraction(path, debug=False)            # pixels uncorre
 relative_profile = homography(path, blade_profile, debug=False) # in mm relative to corner of checkers
 profile, normals = knifeGeo(relative_profile, bevel_angle)      # compute normals vectors and switch to global coords
 profile = (profile + global_offset)                             # locate within global coords                                               # create kinematic model
-# q1 = ik(robot, profile, normals, q0[1], debug=False)            # compute first side joint angles
+q1 = ik(robot, profile, normals, q0[1], debug=False)            # compute first side joint angles
 # q1, start, range_, mid_start, mid_end = trim_yaw(q1, False)
 # velocity = velocity(q1,max_v,start,range_,mid_start,mid_end)
 
@@ -34,7 +34,7 @@ q2 = ik(robot, profile, common.flipZ(normals), q0[2])            # compute other
 # q2 = trim_yaw(q2, True)
 
 # np.savez("knife_data.npz", q1)
-np.savez("knife_data.npz", q2, normals, profile)
+np.savez("knife_data.npz", q1, q2, normals, common.flipZ(normals), profile)
 # np.savez("knife_data.npz", q1, normals, profile, velocity, start, range_, mid_start, mid_end)
 
 # Output over USB

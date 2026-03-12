@@ -283,127 +283,92 @@ def go_dest(robot, q_dest, r, n, steps=50, dt=0.01):
         update_shapes(shapes, robot.q, r, n)
         env.step(dt)
 
-# def ikPt(robot, r, n, q0, 
-#                max_iter=100, 
-#                tol=1e-4,
-#                lam=1,
-#                mu=1e-3):
-    
-#     n = n / np.linalg.norm(n)
-#     qd = [0.0, 0.0, 0.0, 0.0, 0.0]
-#     r =  [0.1095, 0.14597, 0.1315]
-#     n = [ 0.22133524,  0.09916774, -0.9701425 ]
-#     n = n/np.linalg.norm(n)
-    
-#     for i in range(max_iter):
-#         n = n / np.linalg.norm(n)
-
-#         # Forward kinematics
-#         T = robot.fkine(robot.q)
-#         p = T.t
-#         R = T.R
-
-#         x_axis = R[:, 0]
-
-#         # ---- Error vector ----
-#         pos_error = p - r
-#         orient_error = np.cross(x_axis, n)
-
-#         e = np.hstack((pos_error, orient_error))
-
-#         # ---- Jacobian ----
-#         J = robot.jacob0(robot.q)      # 6 x n
-#         Jv = J[0:3, :]
-#         Jw = J[3:6, :]
-
-#         # Orientation task Jacobian
-#         Jo = skew(n) @ skew(x_axis) @ Jw
-
-#         J_task = np.vstack((Jv, Jo))
-
-#         # ---- Damped Least Squares ----
-#         JJt = J_task @ J_task.T
-#         J_pinv = J_task.T @ np.linalg.inv(JJt + mu**2 * np.eye(6))
-
-#         # Update
-#         qd = - lam * J_pinv @ e
-
-#         if np.linalg.norm(e) < tol:
-#             print("iterations ", i)
-#             return robot.q
-
-#         # Integrate velocity to get new joint positions
-#         robot.q = robot.q + qd
-
-#         # Clamp to joint limits
-#         for i, link in enumerate(robot.links):
-#             if link.qlim is not None:
-#                 robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
-        
-#     print("Did not converge")
-#     return None
-
 if __name__ == "__main__":
-    
+
     # ─── Launch ──────────────────────────────────────────────────────────────────
     env = swift.Swift()
     env.launch(realtime=True)
     env.add(robot)
     env.add(knife)
-    
+
     q0 = [0,0,pi/2,pi/2,0]
     robot.q = q0
-    
-    # autozoom(env, robot, q0, scale=1.0)
-    
+
     data = np.load("knife_data.npz")
-    q = data['arr_0']
-    normals = data['arr_1']
-    profile = data['arr_2']
-    
-    
-    q_dest = q[0]
+    q1 = data['arr_0']
+    q2 = data['arr_1']
+    normals1 = data['arr_2']
+    normals2 = data['arr_3']
+    profile = data['arr_4']
+
+
+    q_dest = q1[0]
     r = profile[0]
     r = mm_to_m_vec(r)
-    n = normals[0]
+    n = normals1[0]
     n = n/np.linalg.norm(n)
-    
-    print(r)
-    print(n)
-    
+
     robot.q = q0
     qd = q_err(robot,q_dest)
     dt = 0.03
-    
+
     shapes = build_shapes(q_dest,r,n,robot)
     for s in shapes:
         env.add(s)
-    
+
     while True:
-        q_dest = q[0]
+        # Get to first point
+        q_dest = q1[0]
         r = profile[0]
         r = mm_to_m_vec(r)
-        n = normals[0]
+        n = normals1[0]
         n = n/np.linalg.norm(n)
-    
+
         go_dest(robot, q_dest, r, n)
-    
-        for i in range(1,len(q)):
-            q_dest = q[i]
+
+        # complete pass
+        for i in range(1,len(q1)):
+            q_dest = q1[i]
             r = profile[i]
             r = mm_to_m_vec(r)
-            n = normals[i]
+            n = normals1[i]
             n = n/np.linalg.norm(n)
-    
+
             go_dest(robot, q_dest, r, n, steps=1, dt = 0.0001)
-    
+
+        #return
         q_dest = q0
         r = robot.fkine(q_dest).t
         n = [0,0,1]
-    
+
         go_dest(robot, q_dest, r, n)
-    
-    
-    
+
+        #start on other side
+        # Get to first point
+        q_dest = q2[0]
+        r = profile[0]
+        r = mm_to_m_vec(r)
+        n = normals2[0]
+        n = n/np.linalg.norm(n)
+
+        go_dest(robot, q_dest, r, n)
+
+        # complete pass
+        for i in range(1,len(q2)):
+            q_dest = q2[i]
+            r = profile[i]
+            r = mm_to_m_vec(r)
+            n = normals2[i]
+            n = n/np.linalg.norm(n)
+
+            go_dest(robot, q_dest, r, n, steps=1, dt = 0.0001)
+
+        #return
+        q_dest = q0
+        r = robot.fkine(q_dest).t
+        n = [0,0,1]
+
+        go_dest(robot, q_dest, r, n)
+
+
     env.hold()
-    
