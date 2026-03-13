@@ -75,7 +75,7 @@ def make_normal_arrow(r, n, length=0.05, color=(1.0, 0.0, 0.0, 1.0)):
 
     return Cylinder(radius=RADIUS, length=length, pose=T.A, color=color)
 
-def build_shapes(q, r, n, robot):
+def build_shapes(q, r, robot):
     O = sm.SE3()
 
     T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
@@ -130,7 +130,7 @@ def build_shapes(q, r, n, robot):
         sphere(T4),
 
         sphere(Tr, color=RED),
-        make_normal_arrow(r, n, length=0.05, color=RED),
+        # make_normal_arrow(r, length=0.05, color=RED),
     ]
 
 # ─── Update shapes ───────────────────────────────────────────────────────────
@@ -155,16 +155,16 @@ def update_shapes(shapes, q, r):
 
     Tr = O * sm.SE3.Tx(r[0]) * sm.SE3.Ty(r[1]) * sm.SE3.Tz(r[2])
 
-    n_norm = np.array(n) / np.linalg.norm(n)
-    center = np.array(r) + n_norm * 0.05 / 2
-    z = np.array([0, 0, 1])
-    axis = np.cross(z, n_norm)
-    if np.linalg.norm(axis) < 1e-6:
-        T_arrow = sm.SE3.Tx(center[0]) * sm.SE3.Ty(center[1]) * sm.SE3.Tz(center[2])
-    else:
-        angle = np.arccos(np.clip(np.dot(z, n_norm), -1, 1))
-        axis = axis / np.linalg.norm(axis)
-        T_arrow = sm.SE3(center) * sm.SE3.AngleAxis(angle, axis)
+    # n_norm = np.array(n) / np.linalg.norm(n)
+    # center = np.array(r) + n_norm * 0.05 / 2
+    # z = np.array([0, 0, 1])
+    # axis = np.cross(z, n_norm)
+    # if np.linalg.norm(axis) < 1e-6:
+    #     T_arrow = sm.SE3.Tx(center[0]) * sm.SE3.Ty(center[1]) * sm.SE3.Tz(center[2])
+    # else:
+    #     angle = np.arccos(np.clip(np.dot(z, n_norm), -1, 1))
+    #     axis = axis / np.linalg.norm(axis)
+    #     T_arrow = sm.SE3(center) * sm.SE3.AngleAxis(angle, axis)
 
     new_poses = [
         O,                                                      # sphere(O)
@@ -184,7 +184,7 @@ def update_shapes(shapes, q, r):
         T3_tx * sm.SE3.Tz(q[4] / 2),                           # cyl_z(q[4], T3_tx)
         T4,                                                     # sphere(T4)
         Tr,                                                     # sphere(Tr) red target
-        T_arrow,  
+        # T_arrow,  
     ]
 
     for shape, pose in zip(shapes, new_poses):
@@ -296,21 +296,17 @@ if __name__ == "__main__":
     robot.q = q0
 
     data = np.load("knife_data.npz")
-    q1 = data['arr_0']
-    q2 = data['arr_1']
-    normals1 = data['arr_2']
-    normals2 = data['arr_3']
-    profile = data['arr_4']
-    ratios1 = data['arr_5']
-    ratios2 = data['arr_6']
+    tip_q1 = data['tip_q1']           # joint variables to reach knife tip on first side
+    tip_q1 = data['tip_q1']           # joint variables to reach knife tip on second side
+    yaw_indices = data['yaw_indices'] # yaw values of sample points (note they are descending)
+    ratios1 = data['ratios1']         # ratio between actuator velocities and yaw velocity for first side
+    ratios2 = data['ratios2']         # ratio between actuator velocities and yaw velocity for second side
 
-    q0 = q1[0]
-    r = profile[0]
+    q0 = tip_q1
+    r = robot.fkine(q0).t
     r = mm_to_m_vec(r)
-    n = normals1[0]
-    n = n/np.linalg.norm(n)
 
-    shapes = build_shapes(q0,r,n,robot)
+    shapes = build_shapes(q0,r,robot)
     for s in shapes:
         env.add(s)
 
@@ -325,13 +321,13 @@ if __name__ == "__main__":
 
     while True:
         # start at hilt
-        robot.q = q1[0]
+        robot.q = q0
         yaw_idx = 0
 
         # while the yaw hasn't reached the hilt
-        while robot.q[2] > q1[-1][2]:
+        while robot.q[2] > yaw_indices[-1]:
             # check if we got to next yaw index
-            if robot.q[2] <= q1[yaw_idx+1][2]:
+            if robot.q[2] <= yaw_indices[yaw_idx+1]:
                 yaw_idx += 1
             
             # with correct idx, get velocity and update
@@ -344,10 +340,6 @@ if __name__ == "__main__":
             update_shapes(shapes, robot.q, pose.t)
             env.step(dt)
 
-        print("q actual = ", robot.q)
-        print("q desired = ", q1[yaw_idx])
-
-        # print("done")
         sleep(0.5)
 
     env.hold()
