@@ -297,34 +297,30 @@ if __name__ == "__main__":
 
     data = np.load("knife_data.npz")
     q1 = data['arr_0']
-    # q2 = data['arr_1']
+    q2 = data['arr_1']
     normals1 = data['arr_2']
     normals2 = data['arr_3']
     profile = data['arr_4']
-    mid_start = data['arr_5']
-    mid_end = data['arr_6']
-    velocity = data['arr_7']
+    ratios1 = data['arr_5']
+    ratios2 = data['arr_6']
 
-    q_dest = q1[0]
+    q0 = q1[0]
     r = profile[0]
     r = mm_to_m_vec(r)
     n = normals1[0]
     n = n/np.linalg.norm(n)
 
-    shapes = build_shapes(q_dest,r,n,robot)
+    shapes = build_shapes(q0,r,n,robot)
     for s in shapes:
         env.add(s)
 
-    # want to mark the mid start and end points
-    # print(mid_start)
-    # print(mid_end)
-    r_ms = robot.fkine(q1[mid_start])
-    r_me = robot.fkine(q1[mid_end])
-    s_ms = sphere(r_ms, color = GREEN)
-    s_me = sphere(r_me, color = GREEN)
-    env.add(s_ms)
-    env.add(s_me)
+    # ratio slice is an array with 4 elements for the specific yaw interval
+    def apply_ratio(yaw_v, ratio_slice):
+        velocity = yaw_v * ratio_slice # multiply other actuator velocities by appropriate ratios
+        velocity = [*velocity[:2], *[yaw_v], *velocity[2:]] # middle index is just the yaw velocity
+        return np.array(velocity)  
 
+    yaw_v = -pi/4 # set yaw velocity rad/s
     dt = 0.005
 
     while True:
@@ -339,7 +335,8 @@ if __name__ == "__main__":
                 yaw_idx += 1
             
             # with correct idx, get velocity and update
-            qd = velocity[yaw_idx]
+            velocity = apply_ratio(yaw_v, ratios1[yaw_idx])
+            qd = velocity
 
             robot.q = robot.q + dt*qd
 
