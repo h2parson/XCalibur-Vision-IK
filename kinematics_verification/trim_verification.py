@@ -295,7 +295,7 @@ if __name__ == "__main__":
     q0 = [0,0,pi/2,pi/2,0]
     robot.q = q0
 
-    data = np.load("knife_data.npz")
+    data = np.load("../knife_data.npz")
     q1 = data['arr_0']
     q2 = data['arr_1']
     normals1 = data['arr_2']
