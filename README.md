@@ -96,4 +96,11 @@ Procedure:
 2) Choose a yaw velocity
 3) Multiply by the corresponding ratios for the yaw index to calculate joint velocities
 
+###################################    Benchmarks    #####################################
+Running this on my laptop I get (units are seconds and bytes):
+
+profile_extraction_time =  2.39435076713562
+kinematics_processing_time =  0.7474410533905029
+total_time =  3.141791820526123
+output size = 4272 bytes
 
