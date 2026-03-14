@@ -12,7 +12,7 @@ from math import pi
 import time
 import sys
 start = time.time()
-benchmarking = False
+benchmarking = True
 
 '''****************************************           CONSTANTS           *****************************************'''
 path = "../rpiImages/bigPaper.jpg"
@@ -26,10 +26,11 @@ q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 an
 
 '''****************************************       PROFILE EXTRACTION      ****************************************'''
 blade_profile = profileExtraction(path, debug=False)               # pixels uncorrected
+if benchmarking: profile_extraction_time = time.time() - start
 relative_profile = homography(path, blade_profile, debug=False)    # in mm relative to corner of checkers
 profile, normals = knifeGeo(relative_profile, bevel_angle)         # compute normals vectors and switch to global coords
 profile = (profile + global_offset)                                # locate within global coords
-if benchmarking: profile_extraction_time = time.time() - start
+if benchmarking: homography_time = time.time() - start - profile_extraction_time
 
 '''****************************************       KINEMATICS SIDE I      ****************************************'''
 q1 = ik(robot, profile, normals, q0[1], debug=False)               # compute first side joint angles
@@ -40,7 +41,7 @@ ratios1 = velocity_ratios(q1)                                      # calculate t
 q2 = ik(robot, profile, common.flipZ(normals), q0[2], debug=False) # compute first side joint angles
 q2 = process_yaw(q2, True)                                         # ensure yaw monotonic and segment profile
 ratios2 = velocity_ratios(q2)                                      # calculate the velocity ratios
-if benchmarking: kinematics_processing_time = time.time() - start - profile_extraction_time 
+if benchmarking: kinematics_processing_time = time.time() - start - homography_time 
 
 '''****************************************       PREPARE OUTPUTS        ****************************************'''
 tip_q1 = q1[0]                                                     # joint variables to reach knife tip on first side
@@ -51,6 +52,7 @@ total_time = time.time() - start
 
 if benchmarking: 
     print("profile_extraction_time = ",profile_extraction_time)
+    print("homography_time = ",homography_time)
     print("kinematics_processing_time = ",kinematics_processing_time)
     print("total_time = ",total_time)
     total_bytes = sum(

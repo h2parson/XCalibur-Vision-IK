@@ -45,7 +45,14 @@ def homography(path, blade_profile, debug=False):
     img = cv2.imread(path)
     h, w = img.shape[:2]
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Crop region containing checkerboard (adjust these values to your setup)
+    crop_x = [0, 4300]   # x range
+    crop_y = [1700, 2900]   # y range
+    crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
+
+    img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
+    gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
+    if debug: common.dispImage(gray, "cropped")
 
     checker_dimensions = [22,4]
 
@@ -54,28 +61,30 @@ def homography(path, blade_profile, debug=False):
         print(f"No chessboard found in {path}")
         return
 
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+    # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    # corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+
+    # Convert corners back to full image coordinates
+    corners = corners + crop_offset
+
     corners = orderCorners(checker_dimensions, corners)
     if debug: viewCorners(img, corners)
     
     pixel_origin = [200, 2000]
-    pixel_spacing = [200,200] # pixel
-    real_spacing = [9.36363636364, 9.36363636364]    # mm
+    pixel_spacing = [200,200]
+    real_spacing = [9.36363636364, 9.36363636364]
     scale = [real_spacing[0]/pixel_spacing[0],real_spacing[1]/pixel_spacing[1]]
 
     cornersBase = makeBaseArray(pixel_origin, pixel_spacing, checker_dimensions)
 
-    # Compute homography
     H, mask = cv2.findHomography(corners, cornersBase, cv2.RANSAC)
 
     warped_profile = cv2.perspectiveTransform(blade_profile.astype(np.float64), H)
 
     if debug: 
-        warped_profile = warped_profile.astype(np.int32)  # <-- fix for polylines
+        warped_profile = warped_profile.astype(np.int32)
         warped_img = cv2.warpPerspective(img, H, (int(1.1*w), int(1.1*h)))
-        # cv2.imwrite('warped.jpg', warped_img)
-        common.dispContour(warped_img,warped_profile,"warped profile")
+        common.dispContour(warped_img, warped_profile, "warped profile")
 
     relative_profile = ((warped_profile - pixel_origin) * scale).astype(np.int32)
 
