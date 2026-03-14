@@ -12,7 +12,7 @@ from math import pi
 import time
 import sys
 start = time.time()
-benchmarking = True
+benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
 path = "../rpiImages/bigPaper.jpg"

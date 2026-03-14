@@ -56,7 +56,7 @@ def homography(path, blade_profile, debug=False):
 
     checker_dimensions = [22,4]
 
-    ret, corners = cv2.findChessboardCornersSB(gray, checker_dimensions)
+    ret, corners = cv2.findChessboardCorners(gray, checker_dimensions)
     if not ret:
         print(f"No chessboard found in {path}")
         return
