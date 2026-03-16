@@ -12,12 +12,20 @@ def fwd_avg(vals, n):
     return np.convolve(vals, kernel, mode='valid')
 
 def getBladeContour(img, debug=False):
-    # get dimensions
-    h, w = img.shape[:2]
+    # Crop region containing knife
+    crop_x = [0, 4623]   # x range
+    crop_y = [900, 2900]   # y range
+    crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
+    img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
 
-    grey_lwr_thr = np.array([0, 0, 200])
-    grey_upr_thr = np.array([20, 20, 255])
-    mask = cv2.inRange(img, grey_lwr_thr, grey_upr_thr)
+    if debug: common.dispImage(img_crop, "cropped")
+
+    # get dimensions
+    h, w = img_crop.shape[:2]
+
+    grey_lwr_thr = np.array([0, 0, 100])
+    grey_upr_thr = np.array([60, 30, 255])
+    mask = cv2.inRange(img_crop, grey_lwr_thr, grey_upr_thr)
     mask = cv2.bitwise_not(mask)
     
     if debug: common.dispContour(mask, None, "original mask")
@@ -27,11 +35,15 @@ def getBladeContour(img, debug=False):
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-    # if debug: common.dispContour(mask, None, "closed and opened mask")
+    if debug: common.dispContour(mask, None, "closed and opened mask")
 
     # Extract largest contour of mask to enclose the knife and optionally display
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     blade_contour = max(contours, key=cv2.contourArea)
+
+    # Convert profile back to global image
+    blade_contour = blade_contour + crop_offset
+    blade_contour = blade_contour.astype(np.int32)
 
     if debug: common.dispContour(img, blade_contour, "largest contour")
 

@@ -46,8 +46,8 @@ def homography(path, blade_profile, debug=False):
     h, w = img.shape[:2]
 
     # Crop region containing checkerboard (adjust these values to your setup)
-    crop_x = [0, 4300]   # x range
-    crop_y = [1700, 2900]   # y range
+    crop_x = [1400, 4000]   # x range
+    crop_y = [0, 1000]   # y range
     crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
 
     img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]

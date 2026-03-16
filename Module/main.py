@@ -15,7 +15,7 @@ start = time.time()
 benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
-path = "../rpiImages/bigPaper.jpg"
+path = "../rpiImages/far.jpg"
 global_offset = np.array([109.5-52,145.97+19,131.5], dtype=float)  # This is measured from a homed position
 bevel_angle = 15                                                    # in degrees one-sided
 q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 and 2 for q1, q2 resp.
@@ -27,7 +27,7 @@ q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 an
 '''****************************************       PROFILE EXTRACTION      ****************************************'''
 blade_profile = profileExtraction(path, debug=False)               # pixels uncorrected
 if benchmarking: profile_extraction_time = time.time() - start
-relative_profile = homography(path, blade_profile, debug=False)    # in mm relative to corner of checkers
+relative_profile = homography(path, blade_profile, debug=True)    # in mm relative to corner of checkers
 profile, normals = knifeGeo(relative_profile, bevel_angle)         # compute normals vectors and switch to global coords
 profile = (profile + global_offset)                                # locate within global coords
 if benchmarking: homography_time = time.time() - start - profile_extraction_time

@@ -3,7 +3,7 @@ import numpy as np
 import pyautogui
 
 # Load image
-image_path = "../rpiImages/orange.jpg"
+image_path = "../rpiImages/far.jpg"
 img_orig = cv2.imread(image_path)
 if img_orig is None:
     print("Error: Image not found")
