@@ -15,7 +15,7 @@ start = time.time()
 benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
-path = "../rpiImages/bigPaper.jpg"
+path = "../bigPaper.jpg"
 global_offset = np.array([109.5-52,145.97+19,131.5], dtype=float)  # This is measured from a homed position
 bevel_angle = 15                                                    # in degrees one-sided
 q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 and 2 for q1, q2 resp.
@@ -61,12 +61,12 @@ if benchmarking:
     )
     print(f"output size = {total_bytes} bytes")
 
-# np.savez("knife_data.npz",
-#     tip_q1=tip_q1,
-#     tip_q2=tip_q2,
-#     yaw_indices=yaw_indices,
-#     ratios1=ratios1,
-#     ratios2=ratios2,
-# )
+np.savez("knife_data.npz",
+     tip_q1=tip_q1,
+     tip_q2=tip_q2,
+     yaw_indices=yaw_indices,
+     ratios1=ratios1,
+     ratios2=ratios2,
+)
 
 # Output over USB

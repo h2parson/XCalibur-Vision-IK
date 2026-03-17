@@ -1,5 +1,5 @@
 import cv2
-import pyautogui
+#import pyautogui
 import os
 import numpy as np
 
