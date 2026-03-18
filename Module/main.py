@@ -15,7 +15,7 @@ start = time.time()
 benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
-path = "../rpiImages/far.jpg"
+path = "../rpiImages/bigPaper.jpg"
 global_offset = np.array([109.5-52,145.97+19,131.5], dtype=float)  # This is measured from a homed position
 bevel_angle = 15                                                    # in degrees one-sided
 q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 and 2 for q1, q2 resp.
@@ -27,7 +27,7 @@ q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 an
 '''****************************************       PROFILE EXTRACTION      ****************************************'''
 blade_profile = profileExtraction(path, debug=False)               # pixels uncorrected
 if benchmarking: profile_extraction_time = time.time() - start
-relative_profile = homography(path, blade_profile, debug=True)    # in mm relative to corner of checkers
+relative_profile = homography(path, blade_profile, debug=False)    # in mm relative to corner of checkers
 profile, normals = knifeGeo(relative_profile, bevel_angle)         # compute normals vectors and switch to global coords
 profile = (profile + global_offset)                                # locate within global coords
 if benchmarking: homography_time = time.time() - start - profile_extraction_time
@@ -45,6 +45,7 @@ if benchmarking: kinematics_processing_time = time.time() - start - homography_t
 
 '''****************************************       PREPARE OUTPUTS        ****************************************'''
 tip_q1 = q1[0]                                                     # joint variables to reach knife tip on first side
+tip_q1 = q1[100]
 tip_q2 = q2[0]                                                     # joint variables to reach knife tip on second side
 yaw_indices = q1[:,2]                                              # yaw values are same on both sides
 output_array = [tip_q1, tip_q2, yaw_indices, ratios1, ratios2]     # all outputs to the stm
@@ -61,12 +62,12 @@ if benchmarking:
     )
     print(f"output size = {total_bytes} bytes")
 
-# np.savez("knife_data.npz",
-#     tip_q1=tip_q1,
-#     tip_q2=tip_q2,
-#     yaw_indices=yaw_indices,
-#     ratios1=ratios1,
-#     ratios2=ratios2,
-# )
+np.savez("knife_data.npz",
+    tip_q1=tip_q1,
+    tip_q2=tip_q2,
+    yaw_indices=yaw_indices,
+    ratios1=ratios1,
+    ratios2=ratios2,
+)
 
 # Output over USB

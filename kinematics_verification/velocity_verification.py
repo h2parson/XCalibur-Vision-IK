@@ -193,7 +193,8 @@ def update_shapes(shapes, q, r):
 knife = Mesh(
     filename=r"C:\Vision\CAD\8IN_GERMAN_CHEF_KNIFE.STL",
     scale=(0.001, 0.001, 0.001),
-    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.1185)*sm.SE3.Rz(-pi/2)).A,
+    # pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.09)*sm.SE3.Tz(0.1185)*sm.SE3.Rz(-pi/2)).A,
+    pose = (sm.SE3.Ty(0.15)*sm.SE3.Tx(0.085)*sm.SE3.Tz(0.121)*sm.SE3.Rz(-pi/2)).A,
     color=(1.0, 1.0, 0.0, 1.0)  # RGBA: yellow
 )
 
@@ -310,6 +311,7 @@ if __name__ == "__main__":
     for s in shapes:
         env.add(s)
 
+    '''
     # ratio slice is an array with 4 elements for the specific yaw interval
     def apply_ratio(yaw_v, ratio_slice):
         velocity = yaw_v * ratio_slice # multiply other actuator velocities by appropriate ratios
@@ -341,5 +343,6 @@ if __name__ == "__main__":
             env.step(dt)
 
         sleep(0.5)
+    '''
 
     env.hold()

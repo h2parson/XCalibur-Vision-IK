@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Load image
-image_path = "../rpiImages/topLight.jpg"
+image_path = "../rpiImages/far.jpg"
 img = cv2.imread(image_path)
 import pyautogui
 

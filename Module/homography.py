@@ -49,8 +49,10 @@ def homography(path, blade_profile, debug=False):
     crop_x = [1400, 4000]   # x range
     crop_y = [0, 1000]   # y range
     crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
+    crop_offset = np.array([0,0], dtype=np.float64)
 
-    img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
+    # img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
+    img_crop = img
     gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
     if debug: common.dispImage(gray, "cropped")
 
