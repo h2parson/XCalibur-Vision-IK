@@ -11,7 +11,7 @@ robot = rtb.Robot(
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
-        ET.tz(0.0125),
+        ET.tz(-0.0125),
         ET.Rz(qlim=[-pi, pi]),
 
         ET.Rx(pi/2),
@@ -43,10 +43,10 @@ def mm_to_m_vec(v):
  
 
 def ikPt(robot, r, n, q0, 
-               max_iter=100, 
-               tol=1e-4,
-               lam=1,
-               mu=1e-3):
+               max_iter, 
+               tol,
+               lam,
+               mu):
     
     n = n / np.linalg.norm(n)
     r = mm_to_m_vec(r)
@@ -97,17 +97,18 @@ def ikPt(robot, r, n, q0,
             if link.qlim is not None:
                 robot.q[i] = np.clip(robot.q[i], link.qlim[0], link.qlim[1])
         
+    print("r = ", r)
+    print("n = ", n)
+    print("q0 = ", q0)
     print("Did not converge")
     return None
 
 def ik(robot, rArr, nArr, q0,
                max_iter=100, 
-               tol=1e-4,
+               tol=2e-3,
                lam=0.5,
                mu=1e-3,
                debug=False):
-    # default params (before considering other offsets):
-    # TODO: integrate these other offsets
     result = []
 
     for i in range(len(rArr)):

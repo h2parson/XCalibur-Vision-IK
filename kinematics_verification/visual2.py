@@ -17,7 +17,7 @@ robot = rtb.Robot(
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
-        ET.tz(0.0125),
+        ET.tz(-0.0125),
         ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.Rx(pi/2),
@@ -107,7 +107,7 @@ def build_shapes(q, r, n):
 
         cyl_x(0.029, T0),
         sphere(T0_tx,color=BLUE),
-        cyl_z(0.0125, T0_rx),
+        cyl_z(-0.0125, T0_rx),
         sphere(T1),
 
         cyl_x(0.029, T1_rx),
@@ -171,7 +171,7 @@ def update_shapes(shapes, q):
         T0,                                                     # sphere(T0)
         T0 * sm.SE3.Tx(0.029 / 2) * sm.SE3.Ry(pi / 2),        # cyl_x(0.029, T0)
         T0_tx,                                                  # sphere(T0_tx)
-        T0_rx * sm.SE3.Tz(0.0125 / 2),                        # cyl_z(-0.0125, T0_rx)
+        T0_rx * sm.SE3.Tz(-0.0125 / 2),                        # cyl_z(-0.0125, T0_rx)
         T1,                                                     # sphere(T1)
         T1_rx * sm.SE3.Tx(0.029 / 2) * sm.SE3.Ry(pi / 2),     # cyl_x(0.029, T1_rx)
         T2,                                                     # sphere(T2)
@@ -274,28 +274,22 @@ robot.q = q0
 
 autozoom(env, robot, q0, scale=1.0)
 
-data = np.load("knife_data.npz")
-_ = data['arr_0']
-normals = data['arr_1']
-profile = data['arr_2']
+# data = np.load("knife_data.npz")
+# _ = data['arr_0']
+# normals = data['arr_1']
+# profile = data['arr_2']
 
-r = [0.15,0,0.2]
-n = [-0.1,0,0.9]
-r = profile[0]
-n = normals[0]
-r = mm_to_m_vec(r)
-n = mm_to_m_vec(n)
-n = n/np.linalg.norm(n)
-print(r)
-print(n)
+# r = [0.15,0,0.2]
+# n = [-0.1,0,0.9]
+# r = profile[0]
+# n = normals[0]
+# r = mm_to_m_vec(r)
+# n = mm_to_m_vec(n)
+# n = n/np.linalg.norm(n)
+# print(r)
+# print(n)
 
-shapes = build_shapes(q0,r,n)
-for s in shapes:
-    env.add(s)
-
-thr = 1e-3
-
-# '''
+'''
 while True:
     robot.q = q0
     qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
@@ -388,7 +382,7 @@ while True:
         env.step(dt)
 '''
 
-p_thr = 0.0005
+p_thr = 0.0001
 # o_thr = sin(radians(1))
 dt = 1
 max_iter = 1000
@@ -398,14 +392,23 @@ iter = 0
 q0 = [robot.links[0].qlim[1],0,pi/2,-pi/2,0]
 robot.q = q0
 qd = [0.0, 0.0, 0.0, 0.0, 0.0]  # joint velocities (m/s or rad/s)
-r =  [0.1095, 0.14597, 0.1315]
-n = [ 0.22133524,  0.09916774, 0.9701425 ]
+# r =  [0.1095, 0.14597, 0.1315]
+# n = [ 0.22133524,  0.09916774, 0.9701425 ]
+r = [0.102, 0.046, 0.136]
+n = [ 0.23170947,  0.07165368, 0.9701425 ]
 # r = mm_to_m_vec(r)
 n = n/np.linalg.norm(n)
 # dt = 0.03
+
+shapes = build_shapes(q0,r,n)
+for s in shapes:
+    env.add(s)
+
+thr = 1e-3
+
 while iter < max_iter:
     iter += 1
-    qd, e = joint_v(robot,r,n,robot.q,lam=0.5)
+    qd, e = joint_v(robot,r,n,robot.q,lam=1)
     if np.linalg.norm(e) < p_thr:
         break
 
@@ -430,6 +433,6 @@ else:
 
     sleep(1)
 
-'''
+# '''
 
 env.hold()

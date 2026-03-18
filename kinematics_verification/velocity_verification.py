@@ -17,7 +17,7 @@ robot = rtb.Robot(
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
-        ET.tz(0.0125),
+        ET.tz(-0.0125),
         ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.Rx(pi/2),

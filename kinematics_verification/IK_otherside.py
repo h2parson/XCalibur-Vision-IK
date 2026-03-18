@@ -11,7 +11,7 @@ robot = rtb.Robot(
 
         ET.tx(0.029),
         ET.Rx(-pi/2),
-        ET.tz(0.0125),
+        ET.tz(-0.0125),
         ET.Rz(qlim=[-2*pi, 2*pi]),
 
         ET.Rx(pi/2),
@@ -153,17 +153,17 @@ we will flip the z
 also needs to be in mm
 '''
 
-r = [109.5, 145.97, 131.5]
-n1 = [0.22133524,  0.09916774, -0.9701425]
-n2 = [0.22133524,  0.09916774, 0.9701425]
+# r = [109.5, 145.97, 131.5]
+# n1 = [0.22133524,  0.09916774, -0.9701425]
+# n2 = [0.22133524,  0.09916774, 0.9701425]
 
 q0 = [0,0,pi/2,pi/2,0]
 
-q1 = ikPt(robot, r, n1, q0)
-q2 = ikPt(robot, r, n2, q0)
+# q1 = ikPt(robot, r, n1, q0)
+# q2 = ikPt(robot, r, n2, q0)
 
-print(q1)
-print(q2)
+# print(q1)
+# print(q2)
 
 '''
 [ 0.06320401 -0.42515972  2.67863874  1.79462266  0.08419678]
@@ -187,17 +187,20 @@ from verify_kinematics import knife, build_shapes
 env = swift.Swift()
 env.launch(realtime=True)
 env.add(robot)
-env.add(robot2)
+# env.add(robot2)
 env.add(knife)
+
+r = [102, 46, 136]
+n = [ 0.23170947,  0.07165368, -0.9701425 ]
 
 r = mm_to_m_vec(r)
 
-shapes = build_shapes(q1,r,n1,robot)
+shapes = build_shapes(q0,r,n,robot)
 for s in shapes:
     env.add(s)
 
-shapes = build_shapes(q2,r,n2,robot2)
-for s in shapes:
-    env.add(s)
+# shapes = build_shapes(q2,r,n2,robot2)
+# for s in shapes:
+#     env.add(s)
 
 env.hold()

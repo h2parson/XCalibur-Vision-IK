@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import pyautogui
-from collections import defaultdict
 
 def dispImage(image, text):
     screen_width, screen_height = pyautogui.size()
@@ -18,39 +17,46 @@ def dispContour(img, contour, text, isClosed=False):
         cv2.polylines(output, [contour], isClosed=isClosed, color=(0, 255, 0), thickness=10)
     dispImage(output, text)
 
-# ----------------------------
-# Blade contour extraction
-# ----------------------------
 def getTopContour(img, debug=False):
-    h, w = img.shape[:2]
+    # get dimensions
+    _, w_crop = img.shape[:2]
+    _, w = img.shape[:2]
 
-    grey_lwr_thr = np.array([0, 0, 85])
-    grey_upr_thr = np.array([30, 30, 255])
-    mask = cv2.inRange(img, grey_lwr_thr, grey_upr_thr)
-    mask = cv2.bitwise_not(mask)
-    
-    if debug: dispContour(mask, None, "original mask")
+    # Mask red background in HSV and invert to get knife
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_red1 = np.array([0, 120, 70])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 120, 70])
+    upper_red2 = np.array([180, 255, 255])
+    mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    mask = cv2.bitwise_not(cv2.bitwise_or(mask_red1, mask_red2))
 
-    kernel = np.ones((5,5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    # Denoise mask by morphological closing and opening
+    kernel = np.ones((11,11), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    if debug: dispContour(mask, None, "closed and opened mask")
-
+    # Extract largest contour of mask to enclose the knife and optionally display
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     blade_contour = max(contours, key=cv2.contourArea)
 
-    if debug: dispContour(img, blade_contour, "largest contour")
+    blade_contour = blade_contour.astype(np.int32)
 
+    # Take upper half of contour
     top_contour = []
-    for x in range(w):
+
+    x_min = int(blade_contour[:, 0, 0].min())
+    x_max = int(blade_contour[:, 0, 0].max())
+
+    for x in range(x_min, x_max + 1):
         slice = np.where(blade_contour[:, 0, 0] == x)[0]
         if slice.size > 0:
             top_pt = slice[np.argmin(blade_contour[slice, 0, 1])]
-            top_contour.append(blade_contour[top_pt:top_pt+1, 0:1, :])
+            top_contour.append(blade_contour[top_pt:top_pt+1, 0:1, :])  # shape (1,1,2)
 
-    top_contour = np.concatenate(top_contour, axis=0).astype(np.int32)
-    top_contour = top_contour[np.argsort(top_contour[:, 0, 0])]
+    top_contour = np.concatenate(top_contour, axis=0).astype(np.int32) # shape (N,1,2)
+    top_contour = top_contour[np.argsort(top_contour[:, 0, 0])] # sort by ascending x values
 
     return top_contour
 
@@ -59,6 +65,7 @@ def fwd_avg(vals, n):
         raise ValueError("n must be positive")
     if n > len(vals):
         return np.array([])
+
     kernel = np.ones(n) / n
     return np.convolve(vals, kernel, mode='valid')
 
@@ -67,10 +74,10 @@ def fwd_avg(vals, n):
 # ----------------------------
 def interactiveSlopeViewer(image_path):
     img = cv2.imread(image_path)
-    img = cv2.flip(img, 0) # flip it
+    img = cv2.flip(img, -1) # flip it
     # Crop region containing knife
-    crop_x = [1620, 3800]  # x range
-    crop_y = [2050, 2500]   # y range
+    crop_x = [150, 2800]  # x range
+    crop_y = [2100, 2800]   # y range
     img = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
     if img is None:
         print("Failed to load image.")

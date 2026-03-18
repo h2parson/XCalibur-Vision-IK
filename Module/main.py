@@ -1,5 +1,6 @@
 import common
 from profileExtraction import profileExtraction
+from origin_extraction import originExtraction
 from homography import homography
 from postProcessing import knifeGeo
 from IK import ik, robot
@@ -15,21 +16,25 @@ start = time.time()
 benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
-path = "../rpiImages/bigPaper.jpg"
-global_offset = np.array([109.5-52,145.97+19,131.5], dtype=float)  # This is measured from a homed position
-bevel_angle = 15                                                    # in degrees one-sided
-q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] # index 1 and 2 for q1, q2 resp.
+path = "../enclosure.jpg"
+knife_dist = 170
+wall_dist = knife_dist + 184
+plane_ratio = knife_dist/wall_dist
+global_offset = np.array([69, 20, 136], dtype=float)  # This is measured from a homed position
+bevel_angle = 15                                                             # in degrees one-sided
+q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
 # Function Calls
 # Wait for USB prompt
 # Need to make somthing to take image and assign path
 
 '''****************************************       PROFILE EXTRACTION      ****************************************'''
-blade_profile = profileExtraction(path, debug=False)               # pixels uncorrected
+blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected
+plane_origin = originExtraction(path, debug=False)                                             # find an in-plane reference
 if benchmarking: profile_extraction_time = time.time() - start
-relative_profile = homography(path, blade_profile, debug=False)    # in mm relative to corner of checkers
-profile, normals = knifeGeo(relative_profile, bevel_angle)         # compute normals vectors and switch to global coords
-profile = (profile + global_offset)                                # locate within global coords
+relative_profile = homography(path, blade_profile, plane_origin, plane_ratio, debug=False)     # in mm relative to corner of checkers
+profile, normals = knifeGeo(relative_profile, bevel_angle)                                    # compute normals vectors and switch to global coords
+profile = (profile + global_offset)                                                      # locate within global coords
 if benchmarking: homography_time = time.time() - start - profile_extraction_time
 
 '''****************************************       KINEMATICS SIDE I      ****************************************'''
@@ -37,7 +42,7 @@ q1 = ik(robot, profile, normals, q0[1], debug=False)               # compute fir
 q1 = process_yaw(q1, True)                                         # ensure yaw monotonic and segment profile
 ratios1 = velocity_ratios(q1)                                      # calculate the velocity ratios
 
-'''****************************************       KINEMATICS SIDE II     ****************************************'''
+# '''****************************************       KINEMATICS SIDE II     ****************************************'''
 q2 = ik(robot, profile, common.flipZ(normals), q0[2], debug=False) # compute first side joint angles
 q2 = process_yaw(q2, True)                                         # ensure yaw monotonic and segment profile
 ratios2 = velocity_ratios(q2)                                      # calculate the velocity ratios
@@ -69,5 +74,10 @@ np.savez("knife_data.npz",
     ratios1=ratios1,
     ratios2=ratios2,
 )
+
+# np.savez("knife_data.npz",
+#     profile,
+#     normals
+# )
 
 # Output over USB

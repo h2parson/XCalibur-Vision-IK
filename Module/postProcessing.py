@@ -88,9 +88,9 @@ def swapXY(arr):
     return arr
 
 def knifeGeo(blade_profile, theta):
-    sigmaPos = 51
+    sigmaPos = 31
     sigmaTan = 101
-    sampleRatio = 20
+    sampleRatio = 10
 
     smooth = profileSmoothing(blade_profile,sigmaPos)
     sparseSmooth = sparseArray(smooth, sampleRatio)
