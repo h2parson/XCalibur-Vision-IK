@@ -26,8 +26,9 @@ def detect_geometry(debug=False):
     q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
     '''****************************************       IMAGE CAPTURE           ****************************************'''
-    max_attempts = 3
+    max_attempts = 5
     for i in range(max_attempts):
+        sleep(2)
         if capture():
             log("image succesfully captured", debug=debug)
             break
@@ -35,7 +36,6 @@ def detect_geometry(debug=False):
             log("failed to capture an image", debug=debug)
             if i == max_attempts-1:
                 return False
-            sleep(2)
 
     '''****************************************       PROFILE EXTRACTION      ****************************************'''
     blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected

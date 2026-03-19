@@ -2,7 +2,7 @@ from geometry import detect_geometry
 from blade_present import wait_for_blade
 from common import log
 
-from time import sleep
+from time import sleep, time
 import serial
 from enum import Enum
 import numpy as np
@@ -32,70 +32,6 @@ def open_port(debug=False):
             log("Waiting for device...", debug=debug)
             sleep(1)
 
-def send_array(ser):
-    data = np.load("/home/chuddycholo/XCalibur-Vision-IK/knife_data.npz")
-
-    tip_q1 = data['tip_q1']
-    tip_q2 = data['tip_q2']
-    yaw_indices = data['yaw_indices']
-    ratios1 = data['ratios1']
-    ratios2 = data['ratios2']
-
-    N = np.int16(len(yaw_indices))
-
-    log(f"N {N}")
-    log(f"tip_q1 {tip_q1}")
-    log(f"tip_q2 {tip_q2}")
-    log(f"yaw_indices {yaw_indices}")
-    log(f"ratios1 {ratios1}")
-
-    block_1 = bytes()
-    block_1 += (tip_q1.astype(np.float64).tobytes() + tip_q2.astype(np.float64).tobytes()[:3])
-
-    block_2 = bytes()
-    block_2 += (tip_q2.astype(np.float64).tobytes()[3:]+ N.astype(np.int16).tobytes())
-
-    CHUNK_SIZE = 64
-
-    ser.write(block_1)
-    sleep(0.02)
-    log("Sent block 1")
-
-    ser.write(block_2)
-    sleep(0.02)
-    log("Sent block 2")
-
-    sleep(1)
-
-    for i in range(0, N, 8):
-        block = bytes()
-        block += (yaw_indices[i:i+8]).astype(np.float64).tobytes()
-        ser.write(block)
-        sleep(0.02)
-        log(str(yaw_indices[i:i+8]))
-
-    log("sent yaw")
-    sleep(1)
-
-    for i in range(0, N+1, 2):
-        block = bytes()
-        block += (ratios1[i:i+2]).astype(np.float64).tobytes()
-        ser.write(block)
-        sleep(0.02)
-
-    log("sent ratios1")
-
-    for i in range(0, N+1, 2):
-        block = bytes()
-        block += (ratios2[i:i+2]).astype(np.float64).tobytes()
-        ser.write(block)
-        sleep(0.02)
-
-    log("sent ratios2")
-    log("Done sending")
-
-    return True
-
 def main(debug = False):
     state = State.CONNECT
     ser = None
@@ -112,7 +48,6 @@ def main(debug = False):
             except serial.SerialException:
                 log("Lost connection", debug=debug)
                 # ser.close()
-                state = State.CONNECT
 
         elif state == State.WAIT_START:
             try:
