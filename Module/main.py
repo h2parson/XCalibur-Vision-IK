@@ -16,11 +16,11 @@ start = time.time()
 benchmarking = False
 
 '''****************************************           CONSTANTS           *****************************************'''
-path = "../enclosure.jpg"
+path = "../tests/test5.jpg"
 knife_dist = 170
 wall_dist = knife_dist + 184
 plane_ratio = knife_dist/wall_dist
-global_offset = np.array([69, 20, 136], dtype=float)  # This is measured from a homed position
+global_offset = np.array([52.09, 45.8, 138.55], dtype=float)  # This is measured from a homed position
 bevel_angle = 15                                                             # in degrees one-sided
 q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
@@ -32,10 +32,14 @@ q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # i
 blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected
 plane_origin = originExtraction(path, debug=False)                                             # find an in-plane reference
 if benchmarking: profile_extraction_time = time.time() - start
-relative_profile = homography(path, blade_profile, plane_origin, plane_ratio, debug=False)     # in mm relative to corner of checkers
+relative_profile = homography(path, blade_profile, plane_origin, plane_ratio, debug=True)     # in mm relative to corner of checkers
 profile, normals = knifeGeo(relative_profile, bevel_angle)                                    # compute normals vectors and switch to global coords
+print(profile[0])
+print(profile[-1])
 profile = (profile + global_offset)                                                      # locate within global coords
 if benchmarking: homography_time = time.time() - start - profile_extraction_time
+print(profile[0])
+print(profile[-1])
 
 '''****************************************       KINEMATICS SIDE I      ****************************************'''
 q1 = ik(robot, profile, normals, q0[1], debug=False)               # compute first side joint angles
@@ -45,12 +49,15 @@ ratios1 = velocity_ratios(q1)                                      # calculate t
 # '''****************************************       KINEMATICS SIDE II     ****************************************'''
 q2 = ik(robot, profile, common.flipZ(normals), q0[2], debug=False) # compute first side joint angles
 q2 = process_yaw(q2, True)                                         # ensure yaw monotonic and segment profile
+# q2 = q1.copy()
+# q2[:,0] = 2*131.55 - q1[:,0]
+# q2[:,1] = -q1[:,1]
+# q2[:,3] = pi - q1[:,3]
 ratios2 = velocity_ratios(q2)                                      # calculate the velocity ratios
 if benchmarking: kinematics_processing_time = time.time() - start - homography_time 
 
 '''****************************************       PREPARE OUTPUTS        ****************************************'''
 tip_q1 = q1[0]                                                     # joint variables to reach knife tip on first side
-tip_q1 = q1[100]
 tip_q2 = q2[0]                                                     # joint variables to reach knife tip on second side
 yaw_indices = q1[:,2]                                              # yaw values are same on both sides
 output_array = [tip_q1, tip_q2, yaw_indices, ratios1, ratios2]     # all outputs to the stm

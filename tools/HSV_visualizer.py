@@ -12,8 +12,8 @@ if img is None:
 
 # Convert to HSV
 img = cv2.flip(img, -1)
-crop_x = [900, 2200]  # x range
-crop_y = [2800, 3200]   # y range
+crop_x = [1000, 2800]  # x range
+crop_y = [2800, 3300]   # y range
 img= img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
 hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 screen_width, screen_height = pyautogui.size()

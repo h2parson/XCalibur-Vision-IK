@@ -83,9 +83,25 @@ def homography(path, blade_profile, plane_origin, plane_ratio, debug=False):
     warped_origin = cv2.perspectiveTransform(plane_origin.reshape(1, 1, 2).astype(np.float64), H)
     warped_origin = warped_origin.reshape(2)  # flatten to (2,) for arithmetic and circle
 
+    # Post-compose with a rotation about the image centre
+    angle_deg = -3.0
+    cx, cy = warped_origin[0], warped_origin[1]  # or whatever centre makes sense
+
+    theta = np.deg2rad(angle_deg)
+    cos_t, sin_t = np.cos(theta), np.sin(theta)
+
+    R = np.array([
+        [cos_t, -sin_t, cx * (1 - cos_t) + cy * sin_t],
+        [sin_t,  cos_t, cy * (1 - cos_t) - cx * sin_t],
+        [0,      0,     1]
+    ])
+
+    warped_profile = cv2.perspectiveTransform(warped_profile, R)
+
     if debug:
         warped_profile = warped_profile.astype(np.int32)
         warped_img = cv2.warpPerspective(img, H, (int(1.1*w), int(1.1*h)))
+        warped_img = cv2.warpPerspective(warped_img, R, (int(1.1*w), int(1.1*h)))
         cv2.circle(warped_img, (int(warped_origin[0]), int(warped_origin[1])), 50, (0, 0, 255), -1)
         common.dispContour(warped_img, warped_profile, "warped profile")
 

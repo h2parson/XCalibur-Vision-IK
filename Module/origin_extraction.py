@@ -13,8 +13,8 @@ def fwd_avg(vals, n):
 
 def plane_origin(img, debug=False):
     # Crop region containing knife
-    crop_x = [900, 2200]  # x range
-    crop_y = [2800, 3200]   # y range
+    crop_x = [1050, 2800]  # x range
+    crop_y = [2800, 3300]   # y range
     crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
     img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
 
@@ -26,7 +26,7 @@ def plane_origin(img, debug=False):
 
     # Mask red background in HSV and invert to get knife
     hsv = cv2.cvtColor(img_crop, cv2.COLOR_BGR2HSV)
-    lower_grey = np.array([0, 0, 100])
+    lower_grey = np.array([0, 0, 90])
     upper_grey = np.array([255, 180, 255])
     mask1 = cv2.inRange(hsv, lower_grey, upper_grey)
     lower_red = np.array([0, 0, 0])

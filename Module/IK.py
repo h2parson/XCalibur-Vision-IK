@@ -9,21 +9,22 @@ robot = rtb.Robot(
     rtb.ETS([
         ET.tz(qlim=[0, 0.265]),
 
-        ET.tx(0.029),
+        ET.tx(0.02963),
         ET.Rx(-pi/2),
-        ET.tz(-0.0125),
+        ET.tz(-0.01724),
         ET.Rz(qlim=[-pi, pi]),
 
         ET.Rx(pi/2),
         ET.tx(0.0275),
+        ET.tz(0.00649),
         ET.Rz(qlim=[-pi, pi]),
 
         ET.Rx(pi/2),
-        ET.tz(0.06823),
+        ET.tz(0.04673),
         ET.Rz(qlim=[-pi, pi]),
 
-        ET.tx(0.02974),
-        ET.tz(qlim=[0, 0.095]),
+        ET.tx(0.03074),
+        ET.tz(qlim=[0, 0.115]),
     ]),
     name="XCalibur"
 )

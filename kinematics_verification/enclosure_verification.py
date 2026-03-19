@@ -13,23 +13,24 @@ RADIUS = 0.004  # 4mm in metres
 # ─── Robot Definition ────────────────────────────────────────────────────────
 robot = rtb.Robot(
     rtb.ETS([
-        ET.tz(qlim=[0, 0.198]),
+        ET.tz(qlim=[0, 0.265]),
 
-        ET.tx(0.029),
+        ET.tx(0.02963),
         ET.Rx(-pi/2),
-        ET.tz(-0.0125),
-        ET.Rz(qlim=[-2*pi, 2*pi]),
+        ET.tz(-0.01724),
+        ET.Rz(qlim=[-pi, pi]),
 
         ET.Rx(pi/2),
         ET.tx(0.0275),
-        ET.Rz(qlim=[-2*pi, 2*pi]),
+        ET.tz(0.00649),
+        ET.Rz(qlim=[-pi, pi]),
 
         ET.Rx(pi/2),
-        ET.tz(0.06823),
-        ET.Rz(qlim=[-2*pi, 2*pi]),
+        ET.tz(0.04673),
+        ET.Rz(qlim=[-pi, pi]),
 
-        ET.tx(0.02974),
-        ET.tz(qlim=[0, 0.095]),
+        ET.tx(0.03074),
+        ET.tz(qlim=[0, 0.115]),
     ]),
     name="XCalibur"
 )
@@ -82,103 +83,96 @@ def _normal_arrow_pose(r, n, length=0.05):
         return sm.SE3(center) * sm.SE3.AngleAxis(angle, axis)
 
 # ─── Build shapes ────────────────────────────────────────────────────────────
-def build_shapes(q, r, n, robot):
+def build_shapes(q, r, robot):
     O = sm.SE3()
 
-    T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
-    T0_tx = T0 * sm.SE3.Tx(0.029)
-    T0_rx = T0_tx * sm.SE3.Rx(-pi/2)
+    T0      = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
+    T0_tx   = T0 * sm.SE3.Tx(0.02963)
+    T0_rx   = T0_tx * sm.SE3.Rx(-pi/2)
 
-    T1 = sm.SE3(robot.fkine(q, end=robot.links[1]).A)
-    T1_rx = T1 * sm.SE3.Rx(pi/2)
+    T1      = sm.SE3(robot.fkine(q, end=robot.links[1]).A)
+    T1_rx   = T1 * sm.SE3.Rx(pi/2)
+    T1_tx   = T1_rx * sm.SE3.Tx(0.0275)
 
-    T2 = sm.SE3(robot.fkine(q, end=robot.links[2]).A)
-    T2_rx = T2 * sm.SE3.Rx(pi/2)
-    T2_tz = T2_rx * sm.SE3.Tz(0.06823)
+    T2      = sm.SE3(robot.fkine(q, end=robot.links[2]).A)
+    T2_rx   = T2 * sm.SE3.Rx(pi/2)
 
-    T3 = sm.SE3(robot.fkine(q, end=robot.links[3]).A)
-    T3_tx = T3 * sm.SE3.Tx(0.02974)
+    T3      = sm.SE3(robot.fkine(q, end=robot.links[3]).A)
+    T3_tx   = T3 * sm.SE3.Tx(0.03074)
     T3_roll = T3 * sm.SE3.Rz(-pi/2) * sm.SE3.Ty(-0.02) * sm.SE3.Tx(-0.029) * sm.SE3.Tz(-0.008)
 
-    T4 = sm.SE3(robot.fkine(q, end=robot.links[4]).A)
+    T4      = sm.SE3(robot.fkine(q, end=robot.links[4]).A)
 
     Tr = O * sm.SE3.Tx(r[0]) * sm.SE3.Ty(r[1]) * sm.SE3.Tz(r[2])
 
     return [
-        sphere(O),                                                          # 0
-
-        cyl_z(q[0], O),                                                     # 1
-        sphere(T0),                                                         # 2
-
-        cyl_x(0.029, T0),                                                   # 3
-        sphere(T0_tx, color=BLUE),                                          # 4
-        cyl_z(-0.0125, T0_rx),                                               # 5
-        sphere(T1),                                                         # 6
-
-        cyl_x(0.029, T1_rx),                                                # 7
-        sphere(T2),                                                         # 8
-
-        cyl_z(0.06823, T2_rx),                                              # 9
-        sphere(T3),                                                         # 10
-
-        Mesh(                                                               # 11
+        sphere(O),                                                      # 0
+        cyl_z(q[0], O),                                                 # 1
+        sphere(T0),                                                     # 2
+        cyl_x(0.02963, T0),                                             # 3
+        sphere(T0_tx, color=BLUE),                                      # 4
+        cyl_z(-0.01724, T0_rx),                                         # 5
+        sphere(T1),                                                     # 6
+        cyl_x(0.0275, T1_rx),                                           # 7
+        cyl_z(0.00649, T1_tx),                                          # 8
+        sphere(T2),                                                     # 9
+        cyl_z(0.04673, T2_rx),                                          # 10
+        sphere(T3),                                                     # 11
+        Mesh(                                                           # 12
             filename=r"C:\Vision\CAD\ROLL_MECHANISM.STL",
             scale=(0.001, 0.001, 0.001),
             pose=(T3_roll).A,
             color=(0.2, 0.6, 1.0, 1.0)
         ),
-
-        cyl_x(0.02974, T3),                                                 # 12
-        sphere(T3_tx, color=BLUE),                                          # 13
-        cyl_z(q[4], T3_tx),                                                 # 14
-        sphere(T4),                                                         # 15
-
-        sphere(Tr, color=RED),                                              # 16
-        make_normal_arrow(r, n, length=0.05, color=RED),                    # 17
+        cyl_x(0.03074, T3),                                             # 13
+        sphere(T3_tx, color=BLUE),                                      # 14
+        cyl_z(q[4], T3_tx),                                             # 15
+        sphere(T4),                                                     # 16
+        sphere(Tr, color=RED),                                          # 17
     ]
 
 # ─── Update shapes ───────────────────────────────────────────────────────────
-def update_shapes(shapes, q, r, n):
+def update_shapes(shapes, q, r):
     O = sm.SE3()
 
-    T0 = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
-    T0_tx = T0 * sm.SE3.Tx(0.029)
-    T0_rx = T0_tx * sm.SE3.Rx(-pi/2)
+    T0      = sm.SE3(robot.fkine(q, end=robot.links[0]).A)
+    T0_tx   = T0 * sm.SE3.Tx(0.02963)
+    T0_rx   = T0_tx * sm.SE3.Rx(-pi/2)
 
-    T1 = sm.SE3(robot.fkine(q, end=robot.links[1]).A)
-    T1_rx = T1 * sm.SE3.Rx(pi/2)
+    T1      = sm.SE3(robot.fkine(q, end=robot.links[1]).A)
+    T1_rx   = T1 * sm.SE3.Rx(pi/2)
+    T1_tx   = T1_rx * sm.SE3.Tx(0.0275)
 
-    T2 = sm.SE3(robot.fkine(q, end=robot.links[2]).A)
-    T2_rx = T2 * sm.SE3.Rx(pi/2)
+    T2      = sm.SE3(robot.fkine(q, end=robot.links[2]).A)
+    T2_rx   = T2 * sm.SE3.Rx(pi/2)
 
-    T3 = sm.SE3(robot.fkine(q, end=robot.links[3]).A)
-    T3_tx = T3 * sm.SE3.Tx(0.02974)
+    T3      = sm.SE3(robot.fkine(q, end=robot.links[3]).A)
+    T3_tx   = T3 * sm.SE3.Tx(0.03074)
     T3_roll = T3 * sm.SE3.Rz(-pi/2) * sm.SE3.Ty(-0.02) * sm.SE3.Tx(-0.029) * sm.SE3.Tz(-0.008)
 
-    T4 = sm.SE3(robot.fkine(q, end=robot.links[4]).A)
+    T4      = sm.SE3(robot.fkine(q, end=robot.links[4]).A)
 
     Tr = O * sm.SE3.Tx(r[0]) * sm.SE3.Ty(r[1]) * sm.SE3.Tz(r[2])
-    T_arrow = _normal_arrow_pose(r, n, length=0.05)
 
     new_poses = [
-        O,                                                      # 0  sphere(O)
-        O * sm.SE3.Tz(q[0] / 2),                               # 1  cyl_z(q[0], O)
-        T0,                                                     # 2  sphere(T0)
-        T0 * sm.SE3.Tx(0.029 / 2) * sm.SE3.Ry(pi / 2),        # 3  cyl_x(0.029, T0)
-        T0_tx,                                                  # 4  sphere(T0_tx)
-        T0_rx * sm.SE3.Tz(-0.0125 / 2),                         # 5  cyl_z(0.0125, T0_rx)
-        T1,                                                     # 6  sphere(T1)
-        T1_rx * sm.SE3.Tx(0.029 / 2) * sm.SE3.Ry(pi / 2),     # 7  cyl_x(0.029, T1_rx)
-        T2,                                                     # 8  sphere(T2)
-        T2_rx * sm.SE3.Tz(0.06823 / 2),                        # 9  cyl_z(0.06823, T2_rx)
-        T3,                                                     # 10 sphere(T3)
-        T3_roll,                                                # 11 Mesh roll_mechanism
-        T3 * sm.SE3.Tx(0.02974 / 2) * sm.SE3.Ry(pi / 2),      # 12 cyl_x(0.02974, T3)
-        T3_tx,                                                  # 13 sphere(T3_tx)
-        T3_tx * sm.SE3.Tz(q[4] / 2),                           # 14 cyl_z(q[4], T3_tx)
-        T4,                                                     # 15 sphere(T4)
-        Tr,                                                     # 16 sphere(Tr) red target
-        T_arrow,                                                # 17 normal arrow
+        O,                                                          # 0  sphere(O)
+        O * sm.SE3.Tz(q[0] / 2),                                   # 1  cyl_z(q[0], O)
+        T0,                                                         # 2  sphere(T0)
+        T0 * sm.SE3.Tx(0.02963 / 2) * sm.SE3.Ry(pi / 2),          # 3  cyl_x(0.02963, T0)
+        T0_tx,                                                      # 4  sphere(T0_tx)
+        T0_rx * sm.SE3.Tz(-0.01724 / 2),                           # 5  cyl_z(-0.01724, T0_rx)
+        T1,                                                         # 6  sphere(T1)
+        T1_rx * sm.SE3.Tx(0.0275 / 2) * sm.SE3.Ry(pi / 2),        # 7  cyl_x(0.0275, T1_rx)
+        T1_tx * sm.SE3.Tz(0.00649 / 2),                            # 8  cyl_z(0.00649, T1_tx)
+        T2,                                                         # 9  sphere(T2)
+        T2_rx * sm.SE3.Tz(0.04673 / 2),                            # 10 cyl_z(0.04673, T2_rx)
+        T3,                                                         # 11 sphere(T3)
+        T3_roll,                                                    # 12 Mesh roll_mechanism
+        T3 * sm.SE3.Tx(0.03074 / 2) * sm.SE3.Ry(pi / 2),          # 13 cyl_x(0.03074, T3)
+        T3_tx,                                                      # 14 sphere(T3_tx)
+        T3_tx * sm.SE3.Tz(q[4] / 2),                               # 15 cyl_z(q[4], T3_tx)
+        T4,                                                         # 16 sphere(T4)
+        Tr,                                                         # 17 sphere(Tr) red target
     ]
 
     for shape, pose in zip(shapes, new_poses):
@@ -277,16 +271,26 @@ q0 = [robot.links[0].qlim[0], 0, pi/2, pi/2, 0]
 robot.q = q0
 
 data = np.load("knife_data.npz")
-profile = data['arr_0']
-normals = data['arr_1']
+tip_q1 = data['tip_q1']
+tip_q2 = data['tip_q2']
+yaw_indices = data['yaw_indices']
+ratios1 = data['ratios1']
+ratios2 = data['ratios2']
 
-r = profile[0]
-n = normals[0]
-r_m = mm_to_m_vec(r)
+r = robot.fkine(tip_q1).t
+n = [0,0,1]
+# r_m = mm_to_m_vec(r)
 
-shapes = build_shapes(q0, r_m, n, robot)
+robot.q = tip_q1
+
+shapes = build_shapes(q0, r, robot)
 for s in shapes:
     env.add(s)
+
+dt = 0.03
+
+# while robot.q[2] < yaw_indices[-1]:
+#     robot
 
 # print("r = ", r)
 # print("n = ", n)
@@ -300,21 +304,21 @@ for s in shapes:
 
 # r = [102, 46, 136]
 # n = np.array([-0.23170947, -0.07165368, 0.9701425])
-for i in range(len(profile)):
-    r = profile[i]
-    n = normals[i]
-    print("i = ", i)
-    print("r = ", r)
-    print("n = ", n)
-    r_m = mm_to_m_vec(r)
+# for i in range(len(profile)):
+#     r = profile[i]
+#     n = normals[i]
+#     print("i = ", i)
+#     print("r = ", r)
+#     print("n = ", n)
+#     r_m = mm_to_m_vec(r)
 
-    q = ikPt(robot, r, n, q0, 100, 2e-3, 0.5, 1e-3)
-    robot.q = q
+#     q = ikPt(robot, r, n, q0, 100, 2e-3, 0.5, 1e-3)
+#     robot.q = q
 
-    print("Converged!!!")
+#     print("Converged!!!")
 
-    update_shapes(shapes, robot.q, r_m, n)
-    env.step()
-    sleep(0.01)
+#     update_shapes(shapes, robot.q, r_m, n)
+#     env.step()
+#     sleep(0.01)
 
 env.hold()
