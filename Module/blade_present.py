@@ -12,7 +12,7 @@ def blade_present(path, debug=False):
     crop_x = [250, 2800]  # x range
     crop_y = [2100, 2800]   # y range
     img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
-    common.dispImage(img_crop, "cropped")
+    if debug: common.dispImage(img_crop, "cropped")
     # get dimensions
     h_crop, w_crop = img_crop.shape[:2]
     # Mask red background in HSV and invert to get knife
@@ -30,7 +30,7 @@ def blade_present(path, debug=False):
     area_pixels = cv2.countNonZero(mask)
     total_pixels = h_crop * w_crop
     area_fraction = area_pixels / total_pixels
-    if debug: print(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)")
+    print(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)")
 
     threshold = 0.535
     return area_fraction >= threshold
@@ -43,6 +43,7 @@ def wait_for_blade(timeout=60):
 
     while time() < start + timeout:
         capture()
+        sleep(2)
         print("image taken at time ", time()-start)
         if blade_present(path, debug=False):
             print("Blade found")

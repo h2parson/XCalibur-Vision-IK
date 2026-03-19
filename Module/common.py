@@ -50,5 +50,4 @@ def capture():
         print(f"stderr: {e.stderr}")
         return False
 
-    sleep(1)
     return True
