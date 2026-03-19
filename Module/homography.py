@@ -84,7 +84,7 @@ def homography(path, blade_profile, plane_origin, plane_ratio, debug=False):
     warped_origin = warped_origin.reshape(2)  # flatten to (2,) for arithmetic and circle
 
     # Post-compose with a rotation about the image centre
-    angle_deg = -3.0
+    angle_deg = -4.0
     cx, cy = warped_origin[0], warped_origin[1]  # or whatever centre makes sense
 
     theta = np.deg2rad(angle_deg)
