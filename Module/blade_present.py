@@ -32,7 +32,7 @@ def blade_present(path, debug=False):
     area_fraction = area_pixels / total_pixels
     log(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)", debug=debug)
 
-    threshold = 0.535
+    threshold = 0.5
     return area_fraction >= threshold
 
 def wait_for_blade(timeout=90, debug=False):
@@ -42,6 +42,7 @@ def wait_for_blade(timeout=90, debug=False):
     start = time()
 
     while time() < start + timeout:
+        sleep(2)
         if not capture():
             continue
         sleep(2)

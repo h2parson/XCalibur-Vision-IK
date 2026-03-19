@@ -96,7 +96,7 @@ def main(debug = False):
 
         elif state == State.VISION:
             result = detect_geometry(debug=debug)
-            # if we alread failed, don't proceed
+            # if we already failed, don't proceed
             if not result:
                 try:
                     # ser.write(FAIL.encode('utf-8'))

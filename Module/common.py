@@ -52,7 +52,7 @@ def capture():
 
     return True
 
-MAX_LOG_SIZE = 50 * 1024 * 1024  # 1 MB
+MAX_LOG_SIZE = 2 * 1024 * 1024  # 1 MB
 
 def log(msg, debug=False):
     if debug: print(msg)
