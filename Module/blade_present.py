@@ -1,34 +1,54 @@
 import cv2
 import numpy as np
 import common
+from common import capture
+from time import sleep, time
 
-path = "../rpiImages/noBlade.jpg"
-img = cv2.imread(path)
+def blade_present(path, debug=False):
+    img = cv2.imread(path)
+    img = cv2.flip(img, -1) # flip it
 
-# Crop region containing knife
-crop_x = [0,2500]   # x range
-crop_y = [900, 2000]   # y range
-crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
-img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
-common.dispImage(img_crop, "cropped")
+    # Crop region containing knife
+    crop_x = [250, 2800]  # x range
+    crop_y = [2100, 2800]   # y range
+    img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
+    common.dispImage(img_crop, "cropped")
+    # get dimensions
+    h_crop, w_crop = img_crop.shape[:2]
+    # Mask red background in HSV and invert to get knife
+    hsv = cv2.cvtColor(img_crop, cv2.COLOR_BGR2HSV)
+    lower_red1 = np.array([0, 120, 45])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 120, 45])
+    upper_red2 = np.array([180, 255, 255])
+    mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    mask = cv2.bitwise_not(cv2.bitwise_or(mask_red1, mask_red2))
 
-# get dimensions
-h, w = img_crop.shape[:2]
-grey_lwr_thr = np.array([0, 0, 75])
-grey_upr_thr = np.array([60, 30, 255])
-mask = cv2.inRange(img_crop, grey_lwr_thr, grey_upr_thr)
-mask = cv2.bitwise_not(mask)
+    if debug: common.dispContour(mask, None, "original mask")
 
-common.dispContour(mask, None, "original mask")
-# Denoise mask by morphological closing and opening
-kernel = np.ones((5,5), np.uint8)
-mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-common.dispContour(mask, None, "closed and opened mask")
+    area_pixels = cv2.countNonZero(mask)
+    total_pixels = h_crop * w_crop
+    area_fraction = area_pixels / total_pixels
+    if debug: print(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)")
 
-area_pixels = cv2.countNonZero(mask)
-total_pixels = h * w
-area_fraction = area_pixels / total_pixels
-print(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)")
+    threshold = 0.535
+    return area_fraction >= threshold
 
-# threshold should be around 12%
+def wait_for_blade(timeout=30):
+    path = "temp.jpg"
+    start = time()
+
+    while time() < start + timeout:
+        capture()
+        print("image taken at time ", time()-start)
+        if blade_present(path, debug=False):
+            return True
+        print("No blade found in image at time ", time()-start)
+        
+    return False
+
+if __name__ == "__main__":
+    print("waiting for blade")
+    result = wait_for_blade()
+    print("blade detected is ", result)

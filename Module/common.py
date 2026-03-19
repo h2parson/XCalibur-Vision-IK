@@ -1,7 +1,9 @@
 import cv2
-import pyautogui
+# import pyautogui
 import os
 import numpy as np
+import subprocess
+from time import sleep
 
 def dispImage(image, text):
     screen_width, screen_height = pyautogui.size()
@@ -33,3 +35,15 @@ def flipZ(normals):
         n = np.array([normals[i][0],normals[i][1],-normals[i][2]])
         result.append(n)
     return result
+
+def capture():
+    subprocess.run([
+        "rpicam-still",
+        "-t", "3000",
+        "--width", "4624",
+        "--height", "3472",
+        "-o", "temp.jpg"
+    ], check=True)
+
+    sleep(1)
+    return

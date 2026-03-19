@@ -127,7 +127,7 @@ def fwd_avg(vals, n):
 
 def getBladeContour(img, debug=False):
     # Crop region containing knife
-    crop_x = [150, 2800]  # x range
+    crop_x = [250, 2800]  # x range
     crop_y = [2100, 2800]   # y range
     crop_offset = np.array([crop_x[0], crop_y[0]], dtype=np.float64)
     img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]

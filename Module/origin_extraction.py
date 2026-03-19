@@ -26,7 +26,7 @@ def plane_origin(img, debug=False):
 
     # Mask red background in HSV and invert to get knife
     hsv = cv2.cvtColor(img_crop, cv2.COLOR_BGR2HSV)
-    lower_grey = np.array([0, 0, 90])
+    lower_grey = np.array([0, 0, 80])
     upper_grey = np.array([255, 180, 255])
     mask1 = cv2.inRange(hsv, lower_grey, upper_grey)
     lower_red = np.array([0, 0, 0])
