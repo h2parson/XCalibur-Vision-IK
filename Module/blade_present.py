@@ -35,7 +35,9 @@ def blade_present(path, debug=False):
     threshold = 0.535
     return area_fraction >= threshold
 
-def wait_for_blade(timeout=30):
+def wait_for_blade(timeout=60):
+    print("waiting for blade")
+
     path = "temp.jpg"
     start = time()
 
@@ -43,12 +45,11 @@ def wait_for_blade(timeout=30):
         capture()
         print("image taken at time ", time()-start)
         if blade_present(path, debug=False):
+            print("Blade found")
             return True
-        print("No blade found in image at time ", time()-start)
         
+    print("Did not find a blade")
     return False
 
 if __name__ == "__main__":
-    print("waiting for blade")
     result = wait_for_blade()
-    print("blade detected is ", result)
