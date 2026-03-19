@@ -37,13 +37,18 @@ def flipZ(normals):
     return result
 
 def capture():
-    subprocess.run([
-        "rpicam-still",
-        "-t", "3000",
-        "--width", "4624",
-        "--height", "3472",
-        "-o", "temp.jpg"
-    ], check=True)
+    try:
+        result = subprocess.run([
+            "rpicam-still",
+            "-t", "3000",
+            "--width", "4624",
+            "--height", "3472",
+            "-o", "temp.jpg"
+        ], check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Camera capture failed with return code {e.returncode}")
+        print(f"stderr: {e.stderr}")
+        return False
 
     sleep(1)
-    return
+    return True

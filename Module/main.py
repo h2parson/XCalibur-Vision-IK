@@ -18,7 +18,7 @@ def detect_geometry():
     benchmarking = False
 
     '''****************************************           CONSTANTS           *****************************************'''
-    path = "../tests/test1.jpg"
+    path = "tmp.jpg"
     knife_dist = 170
     wall_dist = knife_dist + 184
     plane_ratio = knife_dist/wall_dist
@@ -29,6 +29,13 @@ def detect_geometry():
     # Function Calls
     # Wait for USB prompt
     # Need to make somthing to take image and assign path
+
+    '''****************************************       IMAGE CAPTURE           ****************************************'''
+    if common.capture():
+        print("image succesfully captured")
+    else:
+        print("failed to capture an image")
+        return False
 
     '''****************************************       PROFILE EXTRACTION      ****************************************'''
     blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected
