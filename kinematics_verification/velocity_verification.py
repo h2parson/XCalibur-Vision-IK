@@ -261,7 +261,7 @@ if __name__ == "__main__":
     ratios1     = data['ratios1']
     ratios2     = data['ratios2']
 
-    q0 = tip_q1
+    q0 = tip_q2
     r  = robot.fkine(q0).t
 
     shapes = build_shapes(q0, r, robot)
@@ -284,7 +284,7 @@ if __name__ == "__main__":
             if robot.q[2] <= yaw_indices[yaw_idx + 1]:
                 yaw_idx += 1
 
-            velocity = apply_ratio(yaw_v, ratios1[yaw_idx])
+            velocity = apply_ratio(yaw_v, ratios2[yaw_idx])
             robot.q  = robot.q + dt * velocity
 
             pose = robot.fkine(robot.q)

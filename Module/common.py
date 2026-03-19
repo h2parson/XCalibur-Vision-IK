@@ -51,3 +51,16 @@ def capture():
         return False
 
     return True
+
+MAX_LOG_SIZE = 50 * 1024 * 1024  # 1 MB
+
+def log(msg, debug=False):
+    if debug: print(msg)
+    log_path = "log.txt"
+    if os.path.exists(log_path) and os.path.getsize(log_path) > MAX_LOG_SIZE:
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+        with open(log_path, "w") as f:
+            f.writelines(lines[len(lines) // 2:])
+    with open(log_path, "a") as f:
+        f.write(msg + "\n")

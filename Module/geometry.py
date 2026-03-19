@@ -1,4 +1,4 @@
-import common
+from common import log, capture, flipZ
 from profileExtraction import profileExtraction
 from origin_extraction import originExtraction
 from homography import homography
@@ -9,12 +9,11 @@ from actuator_processing import velocity_ratios
 
 import numpy as np
 from math import pi
-
-import time
+from time import time, sleep
 import sys
 
-def detect_geometry():
-    start = time.time()
+def detect_geometry(debug=False):
+    start = time()
     benchmarking = False
 
     '''****************************************           CONSTANTS           *****************************************'''
@@ -26,64 +25,63 @@ def detect_geometry():
     bevel_angle = 15                                                             # in degrees one-sided
     q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
-    # Function Calls
-    # Wait for USB prompt
-    # Need to make somthing to take image and assign path
-
     '''****************************************       IMAGE CAPTURE           ****************************************'''
-    if common.capture():
-        print("image succesfully captured")
-    else:
-        print("failed to capture an image")
-        return False
+    max_attempts = 3
+    for i in range(max_attempts):
+        if capture():
+            log("image succesfully captured", debug=debug)
+            break
+        else:
+            log("failed to capture an image", debug=debug)
+            if i == max_attempts-1:
+                return False
+            sleep(2)
 
     '''****************************************       PROFILE EXTRACTION      ****************************************'''
     blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected
-    print("profile extracted")
+    log("profile extracted", debug=debug)
     plane_origin = originExtraction(path, debug=False)                                             # find an in-plane reference
-    print("origin extracted")
-    if benchmarking: profile_extraction_time = time.time() - start
+    log("origin extracted", debug=debug)
+    if benchmarking: profile_extraction_time = time() - start
     relative_profile = homography(path, blade_profile, plane_origin, plane_ratio, debug=False)     # in mm relative to corner of checkers
-    print("homography performed")
+    log("homography performed", debug=debug)
     profile, normals = knifeGeo(relative_profile, bevel_angle)                                    # compute normals vectors and switch to global coords
     profile = (profile + global_offset)                                                      # locate within global coords
-    print("profile processed")
-    if benchmarking: homography_time = time.time() - start - profile_extraction_time
+    log("profile processed", debug=debug)
+    if benchmarking: homography_time = time() - start - profile_extraction_time
 
     '''****************************************       KINEMATICS SIDE I      ****************************************'''
     q1 = ik(robot, profile, normals, q0[1], debug=False)               # compute first side joint angles
     q1 = process_yaw(q1, True)                                         # ensure yaw monotonic and segment profile
     ratios1 = velocity_ratios(q1)                                      # calculate the velocity ratios
-    print("kinematics 1")
+    ratios1 = np.array(ratios1, dtype=np.float64)
+    log("kinematics 1", debug=debug)
 
     # '''****************************************       KINEMATICS SIDE II     ****************************************'''
-    q2 = ik(robot, profile, common.flipZ(normals), q0[2], debug=False) # compute first side joint angles
+    q2 = ik(robot, profile, flipZ(normals), q0[2], debug=False) # compute first side joint angles
     q2 = process_yaw(q2, True)                                         # ensure yaw monotonic and segment profile
-    # q2 = q1.copy()
-    # q2[:,0] = 2*131.55 - q1[:,0]
-    # q2[:,1] = -q1[:,1]
-    # q2[:,3] = pi - q1[:,3]
-    ratios2 = velocity_ratios(q2)                                      # calculate the velocity ratios
-    if benchmarking: kinematics_processing_time = time.time() - start - homography_time
-    print("kinematics 2") 
+    ratios2 = velocity_ratios(q2)  
+    ratios2 = np.array(ratios2, dtype=np.float64)                                    # calculate the velocity ratios
+    if benchmarking: kinematics_processing_time = time() - start - homography_time
+    log("kinematics 2", debug=debug) 
 
     '''****************************************       PREPARE OUTPUTS        ****************************************'''
     tip_q1 = q1[0]                                                     # joint variables to reach knife tip on first side
     tip_q2 = q2[0]                                                     # joint variables to reach knife tip on second side
     yaw_indices = q1[:,2]                                              # yaw values are same on both sides
     output_array = [tip_q1, tip_q2, yaw_indices, ratios1, ratios2]     # all outputs to the stm
-    total_time = time.time() - start
+    total_time = time() - start
 
     if benchmarking: 
-        print("profile_extraction_time = ",profile_extraction_time)
-        print("homography_time = ",homography_time)
-        print("kinematics_processing_time = ",kinematics_processing_time)
-        print("total_time = ",total_time)
+        log("profile_extraction_time = ",profile_extraction_time, debug=debug)
+        log("homography_time = ",homography_time, debug=debug)
+        log("kinematics_processing_time = ",kinematics_processing_time, debug=debug)
+        log("total_time = ",total_time, debug=debug)
         total_bytes = sum(
             arr.nbytes if isinstance(arr, np.ndarray) else sys.getsizeof(arr)
             for arr in [tip_q1, tip_q2, yaw_indices, ratios1, ratios2]
         )
-        print(f"output size = {total_bytes} bytes")
+        log(f"output size = {total_bytes} bytes", debug=debug)
 
     # np.savez("knife_data.npz",
     #     tip_q1=tip_q1,
@@ -98,7 +96,7 @@ def detect_geometry():
 if __name__ == '__main__':
     result = detect_geometry()
     if result:
-        print("success")
+        log("success")
     else:
-        print("fail")
+        log("fail")
 

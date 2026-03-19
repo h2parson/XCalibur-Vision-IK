@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import common
-from common import capture
+from common import capture, log
 from time import sleep, time
 
 def blade_present(path, debug=False):
@@ -12,7 +12,7 @@ def blade_present(path, debug=False):
     crop_x = [250, 2800]  # x range
     crop_y = [2100, 2800]   # y range
     img_crop = img[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
-    if debug: common.dispImage(img_crop, "cropped")
+    #if debug: common.dispImage(img_crop, "cropped")
     # get dimensions
     h_crop, w_crop = img_crop.shape[:2]
     # Mask red background in HSV and invert to get knife
@@ -25,31 +25,32 @@ def blade_present(path, debug=False):
     mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
     mask = cv2.bitwise_not(cv2.bitwise_or(mask_red1, mask_red2))
 
-    if debug: common.dispContour(mask, None, "original mask")
+    #if debug: common.dispContour(mask, None, "original mask")
 
     area_pixels = cv2.countNonZero(mask)
     total_pixels = h_crop * w_crop
     area_fraction = area_pixels / total_pixels
-    print(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)")
+    log(f"Mask area: {area_pixels} px ({area_fraction*100:.2f}% of crop)", debug=debug)
 
     threshold = 0.535
     return area_fraction >= threshold
 
-def wait_for_blade(timeout=60):
-    print("waiting for blade")
+def wait_for_blade(timeout=90, debug=False):
+    log("waiting for blade", debug=debug)
 
     path = "temp.jpg"
     start = time()
 
     while time() < start + timeout:
-        capture()
+        if not capture():
+            continue
         sleep(2)
-        print("image taken at time ", time()-start)
+        log("image taken at time " + str(time()-start), debug=debug)
         if blade_present(path, debug=False):
-            print("Blade found")
+            log("Blade found", debug=debug)
             return True
         
-    print("Did not find a blade")
+    log("Did not find a blade", debug=debug)
     return False
 
 if __name__ == "__main__":
