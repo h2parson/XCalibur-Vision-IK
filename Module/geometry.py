@@ -23,7 +23,7 @@ def detect_geometry(debug=False):
     plane_ratio = knife_dist/wall_dist
     global_offset = np.array([52.09, 45.8, 138.55], dtype=float)  # This is measured from a homed position
     bevel_angle = 15                                                             # in degrees one-sided
-    q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
+    q0 = [[],[robot.links[0].qlim[0],0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
     '''****************************************       IMAGE CAPTURE           ****************************************'''
     # max_attempts = 5

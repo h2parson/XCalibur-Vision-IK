@@ -251,7 +251,8 @@ if __name__ == "__main__":
     env.add(robot)
     env.add(knife)
 
-    q0 = [0, 0, pi/2, pi/2, 0]
+    # q0 = [0, 0, pi/2, pi/2, 0]
+    q0 = [0, 0, 0, 0, 0]
     robot.q = q0
 
     data        = np.load("knife_data.npz")
@@ -261,9 +262,10 @@ if __name__ == "__main__":
     ratios1     = data['ratios1']
     ratios2     = data['ratios2']
 
+
     print(robot.fkine(tip_q1).t)
 
-    q0 = tip_q2
+    q0 = tip_q1
     r  = robot.fkine(q0).t
 
     shapes = build_shapes(q0, r, robot)
@@ -278,21 +280,21 @@ if __name__ == "__main__":
     yaw_v = -pi / 4
     dt    = 0.001
 
-    while True:
-        robot.q = q0
-        yaw_idx = 0
+    # while True:
+    #     robot.q = q0
+    #     yaw_idx = 0
 
-        while robot.q[2] > yaw_indices[-1]:
-            if robot.q[2] <= yaw_indices[yaw_idx + 1]:
-                yaw_idx += 1
+    #     while robot.q[2] > yaw_indices[-1]:
+    #         if robot.q[2] <= yaw_indices[yaw_idx + 1]:
+    #             yaw_idx += 1
 
-            velocity = apply_ratio(yaw_v, ratios2[yaw_idx])
-            robot.q  = robot.q + dt * velocity
+    #         velocity = apply_ratio(yaw_v, ratios2[yaw_idx])
+    #         robot.q  = robot.q + dt * velocity
 
-            pose = robot.fkine(robot.q)
-            update_shapes(shapes, robot.q, pose.t)
-            env.step(dt)
+    #         pose = robot.fkine(robot.q)
+    #         update_shapes(shapes, robot.q, pose.t)
+    #         env.step(dt)
 
-        sleep(0.5)
+    #     sleep(0.5)
 
     env.hold()

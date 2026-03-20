@@ -40,57 +40,57 @@ def main(debug = False):
 
     while True:
         if state == State.CONNECT:
-            # ser = open_port(debug=debug)
+            ser = open_port(debug=debug)
             try:
-                # ser.write(RECONNECT.encode('utf-8'))
+                ser.write(RECONNECT.encode('utf-8'))
                 state = State.WAIT_START
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
 
         elif state == State.WAIT_START:
             try:
-                # line = ser.readline().decode().strip()
-                line = START
+                line = ser.readline().decode().strip()
+                # line = START
                 if START in line:
                     log("Got START", debug=debug)
                     state = State.DETECT_BLADE
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
 
         elif state == State.DETECT_BLADE:
             result = wait_for_blade(debug=debug)
             if not result:
                 try:
-                    # ser.write(FAIL.encode('utf-8'))
+                    ser.write(FAIL.encode('utf-8'))
                     log("Knife Detection Failed!", debug=debug)
                     state = State.WAIT_START
                 except serial.SerialException:
                     log("Lost connection", debug=debug)
-                    # ser.close()
+                    ser.close()
                     state = State.CONNECT
                 continue
             try:
-                # ser.write(KNIFE_DETECTED.encode('utf-8'))
+                ser.write(KNIFE_DETECTED.encode('utf-8'))
                 log("Wrote knife detected!", debug=debug)
                 state = State.WAIT_VISION
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
 
         elif state == State.WAIT_VISION:
             try:
-                # line = ser.readline().decode().strip()
-                line = START_VISION
+                line = ser.readline().decode().strip()
+                # line = START_VISION
                 if START_VISION in line:
                     log("Got START_VISION", debug=debug)
                     state = State.VISION
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
 
         elif state == State.VISION:
@@ -118,22 +118,22 @@ def main(debug = False):
             block_2 += (tip_q2.astype(np.float64).tobytes()[3:]+ N.astype(np.int16).tobytes())
 
             try:
-                # ser.write(block_1)
+                ser.write(block_1)
                 sleep(0.02)
                 log("Sent block 1", debug=debug)
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
                 continue
         
             try:
-                # ser.write(block_2)
+                ser.write(block_2)
                 log("Sent block 2", debug=debug)
                 sleep(1)
             except serial.SerialException:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
                 continue
 
@@ -141,13 +141,13 @@ def main(debug = False):
                 for i in range(0, N, 8):
                     block = bytes()
                     block += (yaw_indices[i:i+8]).astype(np.float64).tobytes()
-                    # ser.write(block)
+                    ser.write(block)
                     sleep(0.02)
                 log("sent yaw", debug=debug)
                 sleep(1)
             except:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
                 continue
             
@@ -155,12 +155,12 @@ def main(debug = False):
                 for i in range(0, N-1, 2):
                     block = bytes()
                     block += (ratios1[i:i+2]).astype(np.float64).tobytes()
-                    # ser.write(block)
+                    ser.write(block)
                     sleep(0.02)
                 log("sent ratios1", debug=debug)
             except:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
                 continue
             
@@ -168,12 +168,12 @@ def main(debug = False):
                 for i in range(0, N-1, 2):
                     block = bytes()
                     block += (ratios2[i:i+2]).astype(np.float64).tobytes()
-                    # ser.write(block)
+                    ser.write(block)
                     sleep(0.02)
                 log("sent ratios2", debug=debug)
             except:
                 log("Lost connection", debug=debug)
-                # ser.close()
+                ser.close()
                 state = State.CONNECT
                 continue
 
