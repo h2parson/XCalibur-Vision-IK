@@ -68,7 +68,7 @@ normals = np.array(normal(bevels, blade_tangents)) * np.array([1, -1, 1])
 # global_points = np.array(global_points[:, np.newaxis, :])
 # normals = np.array(normal(bevels, blade_tangents))[:, np.newaxis, :] * np.array([1, -1, 1])
 
-q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] 
+q0 = [[],[robot.links[0].qlim[0],0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]] 
 
 '''****************************************       KINEMATICS SIDE I      ****************************************'''
 q1 = ik(robot, global_points, normals, q0[1], debug=False)               # compute first side joint angles

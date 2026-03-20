@@ -7,7 +7,7 @@ import time
 
 robot = rtb.Robot(
     rtb.ETS([
-        ET.tz(qlim=[0, 0.265]),
+        ET.tz(qlim=[0.01937, 0.265-0.02737 ]),
 
         ET.tx(0.02963),
         ET.Rx(-pi/2),
