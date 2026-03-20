@@ -2495,3 +2495,36 @@ sent ratios2
 Done sending
 Got START
 waiting for blade
+profile extracted
+origin extracted
+homography performed
+profile processed
+kinematics 1
+kinematics 2
+success
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2
+kinematics 1
+kinematics 2

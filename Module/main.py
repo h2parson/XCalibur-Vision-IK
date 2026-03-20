@@ -1,4 +1,3 @@
-from geometry import detect_geometry
 from blade_present import wait_for_blade
 from common import log
 
@@ -95,18 +94,7 @@ def main(debug = False):
                 state = State.CONNECT
 
         elif state == State.VISION:
-            result = detect_geometry(debug=debug)
-            # if we already failed, don't proceed
-            if not result:
-                try:
-                    # ser.write(FAIL.encode('utf-8'))
-                    log("Profile Detection Failed!", debug=debug)
-                    state = State.WAIT_START
-                except serial.SerialException:
-                    log("Lost connection", debug=debug)
-                    # ser.close()
-                    state = State.CONNECT
-                continue
+            result = np.load('knife_data')
 
             # otherwise try to send data
             tip_q1 = result[0]

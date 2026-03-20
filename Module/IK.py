@@ -108,7 +108,7 @@ def ik(robot, rArr, nArr, q0,
                max_iter=100, 
                tol=2e-3,
                lam=0.5,
-               mu=1e-3,
+               mu=1e-3, 
                debug=False):
     result = []
 

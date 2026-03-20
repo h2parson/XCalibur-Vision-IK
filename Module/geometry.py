@@ -26,16 +26,16 @@ def detect_geometry(debug=False):
     q0 = [[],[0,0,pi/2,pi/2,0],[robot.links[0].qlim[1],0,pi/2,-pi/2,0]]          # index 1 and 2 for q1, q2 resp.
 
     '''****************************************       IMAGE CAPTURE           ****************************************'''
-    max_attempts = 5
-    for i in range(max_attempts):
-        sleep(2)
-        if capture():
-            log("image succesfully captured", debug=debug)
-            break
-        else:
-            log("failed to capture an image", debug=debug)
-            if i == max_attempts-1:
-                return False
+    # max_attempts = 5
+    # for i in range(max_attempts):
+    #     sleep(2)
+    #     if capture():
+    #         log("image succesfully captured", debug=debug)
+    #         break
+    #     else:
+    #         log("failed to capture an image", debug=debug)
+    #         if i == max_attempts-1:
+    #             return False
 
     '''****************************************       PROFILE EXTRACTION      ****************************************'''
     blade_profile = profileExtraction(path, debug=False)                                          # pixels uncorrected
@@ -51,6 +51,8 @@ def detect_geometry(debug=False):
     if benchmarking: homography_time = time() - start - profile_extraction_time
 
     '''****************************************       KINEMATICS SIDE I      ****************************************'''
+    print(np.shape(profile))
+    print(np.shape(normals))
     q1 = ik(robot, profile, normals, q0[1], debug=False)               # compute first side joint angles
     q1 = process_yaw(q1, True)                                         # ensure yaw monotonic and segment profile
     ratios1 = velocity_ratios(q1)                                      # calculate the velocity ratios

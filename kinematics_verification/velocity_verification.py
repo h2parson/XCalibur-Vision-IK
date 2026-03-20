@@ -240,7 +240,7 @@ def go_dest(robot, q_dest, r, steps=50, dt=0.01):
 knife = Mesh(
     filename=r"C:\Vision\CAD\4IN PAIRING KNIFEChungus.STL",
     scale=(0.001, 0.001, 0.001),
-    pose=(sm.SE3.Ty(0.072) * sm.SE3.Tx(0.084) * sm.SE3.Tz(0.1315) * sm.SE3.Rz(-pi/2)).A,
+    pose=(sm.SE3.Ty(0.04461) * sm.SE3.Tx(0.086) * sm.SE3.Tz(0.123) * sm.SE3.Rz(-pi/2)).A,
     color=(1.0, 1.0, 0.0, 1.0)
 )
 
@@ -260,6 +260,8 @@ if __name__ == "__main__":
     yaw_indices = data['yaw_indices']
     ratios1     = data['ratios1']
     ratios2     = data['ratios2']
+
+    print(robot.fkine(tip_q1).t)
 
     q0 = tip_q2
     r  = robot.fkine(q0).t

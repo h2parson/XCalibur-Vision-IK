@@ -21,7 +21,7 @@ def merge_yaw(q):
 
 def trim_yaw(q, left):
     q = np.array(q)
-    trim_frac = 0.15
+    trim_frac = 0.0
     range_ = q[0][2]-q[-1][2]
 
     if left:
